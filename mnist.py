@@ -53,7 +53,7 @@ class RandomDataGenerator(object):
         return y
 
     def _get_samples(self, samples, k, isTrain):
-        x_list, y_list = [], []
+        x_list, y_list, y2_list = [], [], []
         for _ in range(k):
             y = random.randint(0, self.output_nodes - 1)
             x = random.choice(samples[y])
@@ -61,9 +61,11 @@ class RandomDataGenerator(object):
             x = self._merge(x, y2, samples)
             x_list.append(x)
             y_list.append(self._one_hot(y))
+            y2_list.append(self._one_hot(y2))
         x_list = np.asarray(x_list)
         y_list = np.asarray(y_list)
-        return x_list, y_list
+        y2_list = np.asarray(y2_list)
+        return x_list, [y_list, y2_list]
 
     def _get_mi_samples(self, samples, k, n):
         x_list, y_list = [], []
@@ -132,18 +134,17 @@ class DeepModelGenerator(object):
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
         x = tf.keras.layers.Conv2D(64, (3, 3), activation='relu')(x)
         x = tf.keras.layers.Flatten()(x)
-        x = tf.keras.layers.Dense(64, activation='relu')(x)
-        x = tf.keras.layers.Dense(64, activation='relu')(x)
+        for _ in range(12):
+            x = tf.keras.layers.Dense(64, activation='relu')(x)
 
         if self.args.loss_type == 'hinge':
             activation = 'linear'
         else:
             activation = 'softmax'
-        outputs = Dense(output_nodes, activation=activation, name='y1')(x)
-        if self.args.two_outputs:
-            outputs = [outputs,
-                       Dense(output_nodes, activation=activation, name='y2')(
-                           x)]
+        outputs = [
+            Dense(output_nodes, activation=activation, name='y1')(x),
+            Dense(output_nodes, activation=activation, name='y2')(x)
+        ]
         model = Model(inputs=inputs, outputs=outputs)
         return model
 
@@ -187,18 +188,28 @@ class Evaluator(object):
         return ret
 
     def evaluate(self, x, y):
-        if self.args.two_outputs:
-            loss, loss1, loss2, acc1, acc2 = self.model.evaluate(x, y,
-                                                                 verbose=0)
-            return loss, loss1, loss2, acc1, acc2
-        else:
-            loss, acc1 = self.model.evaluate(x, y, verbose=0)
-            return loss, acc1
+        n_samples = len(y[0])
+        y_hat = self.model.predict(x)
+        hit1, hit2, hit = 0, 0, 0
+        for i in range(n_samples):
+            h1 = np.argmax(y[0][i]) == np.argmax(y_hat[0][i])
+            h2 = np.argmax(y[1][i]) == np.argmax(y_hat[1][i])
+            if h1:
+                hit1 += 1
+            if h2:
+                hit2 += 1
+            if h1 and h2:
+                hit += 1
+        acc = hit / n_samples
+        acc1 = hit1 / n_samples
+        acc2 = hit2 / n_samples
+        return acc1, acc2, acc
 
     def evaluate_all(self):
         ret = []
         for data in self.datasets:
             ret.extend(self.evaluate(data[0], data[1]))
+            ret.append("\t")
 
         if self.args.compute_entropy:
             ret.extend(self.compute_mi_all())
@@ -294,7 +305,6 @@ def main(args):
             norm = 0
 
         model.fit(x_train, y_train,
-                  validation_data=test_data,
                   batch_size=args.batch_size,
                   epochs=1, verbose=0)
         if i % 1 == 0:
@@ -307,15 +317,13 @@ if __name__ == '__main__':
                         help='Random seed.')
     parser.add_argument('--parameter_random_seed', type=int, default=7,
                         help='Random seed.')
-    parser.add_argument('--two_outputs', action='store_true', default=False,
-                        help='Use two outputs')
     parser.add_argument('--mask_input', type=int, default=0,
                         help='mask a particular input.')
     parser.add_argument('--n_hidden_layers', type=int, default=2,
                         help='Number of hidden layer.')
     parser.add_argument('--n_hidden_nodes', type=int, default=32,
                         help='Number of nodes in hidden layer.')
-    parser.add_argument('--loss_type', type=str, default='hinge',
+    parser.add_argument('--loss_type', type=str, default='cross_entropy',
                         help='Loss type.')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='Batch size.')
