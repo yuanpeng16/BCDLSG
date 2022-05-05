@@ -72,8 +72,11 @@ class RandomDataGenerator(object):
     def get_eval_samples(self, k):
         return self.get_training_samples(k)
 
-    def get_test_samples(self, k):
-        return self._get_samples(self.test_samples, k, isTrain=False)
+    def get_test_samples(self, k, randomize=False):
+        samples, y_list = self._get_samples(self.test_samples, k, isTrain=False)
+        if randomize:
+            samples = np.random.rand(*samples.shape)
+        return samples, y_list
 
 
 class LongDataGenerator(RandomDataGenerator):
@@ -215,7 +218,7 @@ def main(args):
         assert False
 
     eval_data = dg.get_eval_samples(100)
-    test_data = dg.get_test_samples(100)
+    test_data = dg.get_test_samples(100, randomize=args.test_distribution == 'random')
 
     if args.save_image:
         for i in range(5):
@@ -268,6 +271,8 @@ if __name__ == '__main__':
                         help='Learning rate.')
     parser.add_argument('--merge_type', type=str, default='paired',
                         help='Merge type.')
+    parser.add_argument('--test_distribution', type=str, default='random',
+                        help='Test distribution.')
     parser.add_argument('--random_threshold', type=float, default=0.85,
                         help='Threshold to randomize the second input.')
     parser.add_argument('--save_image', action='store_true', default=False,
