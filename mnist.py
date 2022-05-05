@@ -38,7 +38,7 @@ class RandomDataGenerator(object):
         return ret
 
     def _get_y(self, y1, isTrain):
-        buf = 2
+        buf = 1
         if isTrain:
             if self.args.mask_input == 2:
                 # second setting
@@ -73,7 +73,8 @@ class RandomDataGenerator(object):
         return self.get_training_samples(k)
 
     def get_test_samples(self, k, randomize=False):
-        samples, y_list = self._get_samples(self.test_samples, k, isTrain=False)
+        samples, y_list = self._get_samples(self.test_samples, k,
+                                            isTrain=False)
         if randomize:
             samples = np.random.rand(*samples.shape)
         return samples, y_list
@@ -160,10 +161,27 @@ class Evaluator(object):
         self.args = args
         self.model = model
         self.datasets = datasets
+        self.loss_object_list = [
+            tf.keras.losses.CategoricalCrossentropy(
+                from_logits=True, reduction='none') for _ in range(2)]
+        self.optimizer = tf.keras.optimizers.SGD()
 
-    def evaluate(self, x, y):
+    def evaluate(self, x, y, adversarial=False):
+        if adversarial:
+            x = tf.Variable(x, dtype=tf.float32)
+            for _ in range(20):
+                with tf.GradientTape() as tape:
+                    y_hat = self.model(x)
+                    loss_list = [loss_object(labels, predictions) for
+                                 loss_object, labels, predictions in
+                                 zip(self.loss_object_list, y, y_hat)]
+                    losses = sum(loss_list)
+                    reduced_loss = tf.reduce_sum(losses)
+                gradients = tape.gradient(reduced_loss, x)
+                self.optimizer.apply_gradients(zip([gradients], [x]))
+
+        y_hat = self.model(x)
         n_samples = len(y[0])
-        y_hat = self.model.predict(x)
         hit1, hit2, hit = 0, 0, 0
         for i in range(n_samples):
             h1 = y[0][i][np.argmax(y_hat[0][i])] == 1
@@ -179,11 +197,14 @@ class Evaluator(object):
         acc2 = hit2 / n_samples
         return acc1, acc2, acc
 
-    def evaluate_all(self):
+    def evaluate_all(self, adversarial=False):
         ret = []
-        for data in self.datasets:
-            ret.extend(self.evaluate(data[0], data[1]))
-            ret.append("\t")
+        ret.extend(
+            self.evaluate(self.datasets[0][0], self.datasets[0][1],
+                          adversarial=False))
+        ret.append("\t")
+        ret.extend(self.evaluate(self.datasets[1][0], self.datasets[1][1],
+                                 adversarial=adversarial))
         return ret
 
 
@@ -218,7 +239,8 @@ def main(args):
         assert False
 
     eval_data = dg.get_eval_samples(100)
-    test_data = dg.get_test_samples(100, randomize=args.test_distribution == 'random')
+    test_data = dg.get_test_samples(100,
+                                    randomize=args.test_distribution == 'random')
 
     if args.save_image:
         for i in range(5):
@@ -233,7 +255,7 @@ def main(args):
     loss_object = tf.keras.losses.CategoricalHinge()
 
     # train and evaluate
-    print(0, 0, *ev.evaluate_all())
+    print(0, 0, *ev.evaluate_all(adversarial=args.adversarial))
     for i in range(args.steps):
         x_train, y_train = dg.get_training_samples(args.batch_size)
 
@@ -246,7 +268,7 @@ def main(args):
                   batch_size=args.batch_size,
                   epochs=1, verbose=0)
         if i % 1 == 0:
-            print(i + 1, norm, *ev.evaluate_all())
+            print(i + 1, norm, *ev.evaluate_all(adversarial=args.adversarial))
 
 
 if __name__ == '__main__':
@@ -271,7 +293,7 @@ if __name__ == '__main__':
                         help='Learning rate.')
     parser.add_argument('--merge_type', type=str, default='paired',
                         help='Merge type.')
-    parser.add_argument('--test_distribution', type=str, default='random',
+    parser.add_argument('--test_distribution', type=str, default='original',
                         help='Test distribution.')
     parser.add_argument('--random_threshold', type=float, default=0.85,
                         help='Threshold to randomize the second input.')
@@ -279,5 +301,8 @@ if __name__ == '__main__':
                         help='Show image and stop.')
     parser.add_argument('--compute_gradient', action='store_true',
                         default=False, help='Compute gradient.')
+    parser.add_argument('--adversarial', action='store_true',
+                        default=False,
+                        help='Use adversarial learning on test.')
     args = parser.parse_args()
     main(args)
