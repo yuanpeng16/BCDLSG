@@ -166,8 +166,8 @@ class Evaluator(object):
         y_hat = self.model.predict(x)
         hit1, hit2, hit = 0, 0, 0
         for i in range(n_samples):
-            h1 = np.argmax(y[0][i]) == np.argmax(y_hat[0][i])
-            h2 = np.argmax(y[1][i]) == np.argmax(y_hat[1][i])
+            h1 = y[0][i][np.argmax(y_hat[0][i])] == 1
+            h2 = y[1][i][np.argmax(y_hat[1][i])] == 1
             if h1:
                 hit1 += 1
             if h2:
