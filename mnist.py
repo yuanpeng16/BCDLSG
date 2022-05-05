@@ -67,21 +67,6 @@ class RandomDataGenerator(object):
         y2_list = np.asarray(y2_list)
         return x_list, [y_list, y2_list]
 
-    def _get_mi_samples(self, samples, k, n):
-        x_list, y_list = [], []
-        for _ in range(k):
-            y = random.randint(0, self.output_nodes - 1)
-            x = random.choice(samples[y])
-            mi_list = []
-            for _ in range(n):
-                y2 = random.randint(0, self.output_nodes - 1)
-                mi_list.append(self._merge(x, y2, samples))
-            x_list.append(mi_list)
-            y_list.append(self._one_hot(y))
-        x_list = np.asarray(x_list)
-        y_list = np.asarray(y_list)
-        return x_list, y_list
-
     def get_training_samples(self, k):
         return self._get_samples(self.train_samples, k, isTrain=True)
 
@@ -90,12 +75,6 @@ class RandomDataGenerator(object):
 
     def get_test_samples(self, k):
         return self._get_samples(self.test_samples, k, isTrain=False)
-
-    def get_eval_mi_samples(self, k, n):
-        return self._get_mi_samples(self.train_samples, k, n)
-
-    def get_test_mi_samples(self, k, n):
-        return self._get_mi_samples(self.test_samples, k, n)
 
 
 class LongDataGenerator(RandomDataGenerator):
@@ -160,32 +139,10 @@ class DeepModelGenerator(object):
 
 
 class Evaluator(object):
-    def __init__(self, args, model, datasets, mi_datasets):
+    def __init__(self, args, model, datasets):
         self.args = args
         self.model = model
         self.datasets = datasets
-        self.mi_datasets = [self.preprocess(data[0]) for data in mi_datasets]
-
-    def preprocess(self, data):
-        x_list = []
-        length_list = []
-        for x in data:
-            x_list.extend(x)
-            length_list.append(len(x))
-        x_list = np.asarray(x_list)
-        return x_list, length_list
-
-    def predict(self, x, y):
-        y_hat = self.model.predict(x)
-        for a, b in zip(y, y_hat):
-            for c, d in zip(a, b):
-                print(c, d)
-
-    def predict_all(self):
-        ret = []
-        for data in self.datasets:
-            ret.extend(self.predict(data[0], data[1]))
-        return ret
 
     def evaluate(self, x, y):
         n_samples = len(y[0])
@@ -210,39 +167,6 @@ class Evaluator(object):
         for data in self.datasets:
             ret.extend(self.evaluate(data[0], data[1]))
             ret.append("\t")
-
-        if self.args.compute_entropy:
-            ret.extend(self.compute_mi_all())
-        return ret
-
-    def entropy(self, y_list):
-        n = len(y_list)
-        y_count = {}
-        for y in y_list:
-            y_count[y] = y_count.get(y, 0) + 1
-        entropy = 0
-        for _, v in y_count.items():
-            p = v / n
-            entropy -= p * math.log2(p)
-        return entropy
-
-    def compute_mi(self, data):
-        x_list, length_list = data
-        y_dist_list = self.model.predict(x_list)
-        y_list_all = np.argmax(y_dist_list, axis=-1)
-        avg_entropy = 0
-        offset = 0
-        for length in length_list:
-            end = length + offset
-            y_list = y_list_all[offset:end]
-            avg_entropy += self.entropy(y_list)
-            offset = end
-        return avg_entropy / len(length_list)
-
-    def compute_mi_all(self):
-        ret = []
-        for data in self.mi_datasets:
-            ret.append(self.compute_mi(data))
         return ret
 
 
@@ -277,11 +201,6 @@ def main(args):
     eval_data = dg.get_eval_samples(100)
     test_data = dg.get_test_samples(100)
 
-    mi_data = []
-    if args.compute_entropy:
-        mi_data.append(dg.get_eval_mi_samples(100, 100))
-        mi_data.append(dg.get_test_mi_samples(100, 100))
-
     if args.save_image:
         for i in range(5):
             save_image(eval_data[0][i], 'eval_' + str(i) + '.png')
@@ -290,7 +209,7 @@ def main(args):
 
     mg = DeepModelGenerator(args, dg.get_input_shape())
     model = mg.get_model()
-    ev = Evaluator(args, model, [eval_data, test_data], mi_data)
+    ev = Evaluator(args, model, [eval_data, test_data])
 
     loss_object = tf.keras.losses.CategoricalHinge()
 
@@ -339,7 +258,5 @@ if __name__ == '__main__':
                         help='Show image and stop.')
     parser.add_argument('--compute_gradient', action='store_true',
                         default=False, help='Compute gradient.')
-    parser.add_argument('--compute_entropy', action='store_true',
-                        default=False, help='Compute entropy.')
     args = parser.parse_args()
     main(args)
