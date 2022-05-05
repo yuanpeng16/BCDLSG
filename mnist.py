@@ -7,7 +7,6 @@ from tensorflow.keras.layers import Input
 from tensorflow.keras.layers import Dense
 import argparse
 import random
-import math
 import numpy as np
 from PIL import Image
 
@@ -83,10 +82,11 @@ class LongDataGenerator(RandomDataGenerator):
         x[y2] = x1
 
         x = np.concatenate(x, axis=1)
+        x = np.expand_dims(x, -1)
         return x
 
     def get_input_shape(self):
-        return (28, 28 * self.output_nodes)
+        return (28, 28 * self.output_nodes, 1)
 
 
 class PairedDataGenerator(RandomDataGenerator):
@@ -94,10 +94,24 @@ class PairedDataGenerator(RandomDataGenerator):
         x2 = random.choice(labels[y2])
 
         x = np.concatenate((x1, x2), axis=1)
+        x = np.expand_dims(x, -1)
         return x
 
     def get_input_shape(self):
-        return (28, 28 * 2)
+        return (28, 28 * 2, 1)
+
+
+class StackedDataGenerator(RandomDataGenerator):
+    def _merge(self, x1, y2, labels):
+        x2 = random.choice(labels[y2])
+
+        x1 = np.expand_dims(x1, -1)
+        x2 = np.expand_dims(x2, -1)
+        x = np.concatenate((x1, x2), axis=-1)
+        return x
+
+    def get_input_shape(self):
+        return (28, 28, 2)
 
 
 class DeepModelGenerator(object):
@@ -107,13 +121,13 @@ class DeepModelGenerator(object):
 
     def get_structure(self, output_nodes=10):
         inputs = Input(shape=self.input_shape)
-        x = tf.expand_dims(inputs, -1)
-
-        x = tf.keras.layers.Conv2D(32, (3, 3), activation='relu')(x)
+        x = inputs
+        for _ in range(2):
+            x = tf.keras.layers.Conv2D(64, (3, 3), activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
-        x = tf.keras.layers.Conv2D(64, (3, 3), activation='relu')(x)
+        x = tf.keras.layers.Conv2D(128, (3, 3), activation='relu')(x)
         x = tf.keras.layers.Flatten()(x)
-        for _ in range(12):
+        for _ in range(8):
             x = tf.keras.layers.Dense(64, activation='relu')(x)
 
         if self.args.loss_type == 'hinge':
@@ -195,6 +209,8 @@ def main(args):
         dg = LongDataGenerator(args)
     elif args.merge_type == 'paired':
         dg = PairedDataGenerator(args)
+    elif args.merge_type == 'stacked':
+        dg = StackedDataGenerator(args)
     else:
         assert False
 
