@@ -11,6 +11,12 @@ import numpy as np
 from PIL import Image
 
 
+def one_hot(a, output_nodes):
+    ret = [0] * output_nodes
+    ret[a] = 1
+    return ret
+
+
 class RandomDataGenerator(object):
     def __init__(self, args):
         self.args = args
@@ -60,10 +66,8 @@ class RandomDataGenerator(object):
     def get_test_label_pairs(self):
         return self.test_label_pairs
 
-    def _one_hot(self, a):
-        ret = [0] * self.output_nodes
-        ret[a] = 1
-        return ret
+    def get_output_nodes(self):
+        return self.output_nodes
 
     def _get_samples(self, samples, k, is_train):
         x_list, y_list, y2_list = [], [], []
@@ -75,8 +79,8 @@ class RandomDataGenerator(object):
         for y, y2 in label_list:
             x = self._merge(y, y2, samples)
             x_list.append(x)
-            y_list.append(self._one_hot(y))
-            y2_list.append(self._one_hot(y2))
+            y_list.append(one_hot(y, self.output_nodes))
+            y2_list.append(one_hot(y2, self.output_nodes))
         x_list = np.asarray(x_list)
         y_list = np.asarray(y_list)
         y2_list = np.asarray(y2_list)
@@ -134,11 +138,12 @@ class StackedDataGenerator(RandomDataGenerator):
 
 
 class DeepModelGenerator(object):
-    def __init__(self, args, input_shape):
+    def __init__(self, args, input_shape, output_nodes):
         self.args = args
         self.input_shape = input_shape
+        self.output_nodes = output_nodes
 
-    def get_structure(self, output_nodes=10):
+    def get_structure(self):
         inputs = Input(shape=self.input_shape)
         x = inputs
         for _ in range(2):
@@ -154,8 +159,8 @@ class DeepModelGenerator(object):
         else:
             activation = 'softmax'
         outputs = [
-            Dense(output_nodes, activation=activation, name='y1')(x),
-            Dense(output_nodes, activation=activation, name='y2')(x)
+            Dense(self.output_nodes, activation=activation, name='y1')(x),
+            Dense(self.output_nodes, activation=activation, name='y2')(x)
         ]
         model = Model(inputs=inputs, outputs=outputs)
         return model
@@ -177,25 +182,8 @@ class Evaluator(object):
         self.model = model
         self.datasets = datasets
         self.test_label_pairs = set(test_label_pairs)
-        self.loss_object_list = [
-            tf.keras.losses.CategoricalCrossentropy(
-                from_logits=True, reduction='none') for _ in range(2)]
-        self.optimizer = tf.keras.optimizers.SGD()
 
-    def evaluate(self, x, y, adversarial=False):
-        if adversarial:
-            x = tf.Variable(x, dtype=tf.float32)
-            for _ in range(20):
-                with tf.GradientTape() as tape:
-                    y_hat = self.model(x)
-                    loss_list = [loss_object(labels, predictions) for
-                                 loss_object, labels, predictions in
-                                 zip(self.loss_object_list, y, y_hat)]
-                    losses = sum(loss_list)
-                    reduced_loss = tf.reduce_sum(losses)
-                gradients = tape.gradient(reduced_loss, x)
-                self.optimizer.apply_gradients(zip([gradients], [x]))
-
+    def evaluate(self, x, y):
         y_hat = self.model(x)
         n_samples = len(y[0])
         hit1, hit2, hit, sg_hit = 0, 0, 0, 0
@@ -218,15 +206,85 @@ class Evaluator(object):
         sg_acc = sg_hit / n_samples
         return acc1, acc2, acc, sg_acc
 
-    def evaluate_all(self, adversarial=False):
+    def test_evaluate(self, x, y):
+        return self.evaluate(x, y)
+
+    def evaluate_all(self):
         ret = []
         ret.extend(
-            self.evaluate(self.datasets[0][0], self.datasets[0][1],
-                          adversarial=False))
+            self.evaluate(self.datasets[0][0], self.datasets[0][1]))
         ret.append("\t")
-        ret.extend(self.evaluate(self.datasets[1][0], self.datasets[1][1],
-                                 adversarial=adversarial))
+        ret.extend(
+            self.test_evaluate(self.datasets[1][0], self.datasets[1][1]))
         return ret
+
+
+class AdversarialEvaluator(Evaluator):
+    def __init__(self, args, model, datasets, test_label_pairs):
+        super().__init__(args, model, datasets, test_label_pairs)
+        self.initialize()
+
+    def initialize(self):
+        self.loss_object_list = [tf.keras.losses.CategoricalCrossentropy(
+            from_logits=True, reduction='none') for _ in range(2)]
+
+    def one_step(self, x, y, optimizer):
+        with tf.GradientTape() as tape:
+            y_hat = self.model(x)
+            loss_list = [loss_object(labels, predictions) for
+                         loss_object, labels, predictions in
+                         zip(self.loss_object_list, y, y_hat)]
+            losses = sum(loss_list)
+            reduced_loss = tf.reduce_sum(losses)
+        gradients = tape.gradient(reduced_loss, x)
+        optimizer.apply_gradients(zip([gradients], [x]))
+        return x
+
+    def test_evaluate(self, x, y):
+        result = self.evaluate(x, y)
+        x = tf.Variable(x, dtype=tf.float32)
+        optimizer = tf.keras.optimizers.Adam(lr=self.args.lr * 100)
+        for _ in range(10):
+            x = self.one_step(x, y, optimizer)
+        result2 = self.evaluate(x, y)
+        return list(result), '\t', list(result2)
+
+
+class RandomAdversarialEvaluator(AdversarialEvaluator):
+    def initialize(self):
+        self.output_nodes = [
+            self.model.outputs[0].shape[-1],
+            self.model.outputs[1].shape[-1]
+        ]
+        self.loss_object = []
+        for output_node in self.output_nodes:
+            self.loss_object.append([tf.keras.losses.CategoricalCrossentropy(
+                from_logits=True, reduction='none') for _ in
+                range(output_node)])
+
+    def one_step(self, x, y, optimizer):
+        loss_list = []
+        loss_candidates = []
+        with tf.GradientTape() as tape:
+            y_hat = self.model(x)
+            for los, labels, predictions in zip(self.loss_object,
+                                                y, y_hat):
+                output_node = len(los)
+                losses = []
+                for i in range(output_node):
+                    labels = labels * 0 + one_hot(i, output_node)
+                    loss = los[i](labels, predictions)
+                    losses.append(loss)
+                loss_list.append(losses)
+            for y0, y1 in self.test_label_pairs:
+                added_loss = loss_list[0][y0] + loss_list[1][y1]
+                loss_candidates.append(tf.expand_dims(added_loss, -1))
+            loss_candidates = tf.concat(loss_candidates, 1)
+            min_loss = tf.reduce_min(loss_candidates, axis=-1)
+            best_loss = tf.reduce_sum(min_loss)
+        gradients = tape.gradient(best_loss, x)
+        optimizer.apply_gradients(zip([gradients], [x]))
+        return x
 
 
 def get_grad_norm(loss_object, model, x_train, y_train):
@@ -259,9 +317,9 @@ def main(args):
     else:
         assert False
 
+    randomize = args.test_distribution == 'random'
     eval_data = dg.get_eval_samples(100)
-    test_data = dg.get_test_samples(
-        100, randomize=args.test_distribution == 'random')
+    test_data = dg.get_test_samples(100, randomize=randomize)
 
     if args.save_image:
         for i in range(5):
@@ -269,15 +327,24 @@ def main(args):
             save_image(test_data[0][i], 'test_' + str(i) + '.png')
         return
 
-    mg = DeepModelGenerator(args, dg.get_input_shape())
+    output_nodes = dg.get_output_nodes()
+    mg = DeepModelGenerator(args, dg.get_input_shape(), output_nodes)
     model = mg.get_model()
-    ev = Evaluator(args, model, [eval_data, test_data],
-                   dg.get_test_label_pairs())
+    test_label_pairs = dg.get_test_label_pairs()
+    if args.adversarial:
+        if args.any_generalization:
+            ev = RandomAdversarialEvaluator(
+                args, model, [eval_data, test_data], test_label_pairs)
+        else:
+            ev = AdversarialEvaluator(
+                args, model, [eval_data, test_data], test_label_pairs)
+    else:
+        ev = Evaluator(args, model, [eval_data, test_data], test_label_pairs)
 
     loss_object = tf.keras.losses.CategoricalHinge()
 
     # train and evaluate
-    print(0, 0, *ev.evaluate_all(adversarial=args.adversarial))
+    print(0, 0, *ev.evaluate_all())
     for i in range(args.steps):
         x_train, y_train = dg.get_training_samples(args.batch_size)
 
@@ -290,7 +357,7 @@ def main(args):
                   batch_size=args.batch_size,
                   epochs=1, verbose=0)
         if i % 1 == 0:
-            print(i + 1, norm, *ev.evaluate_all(adversarial=args.adversarial))
+            print(i + 1, norm, *ev.evaluate_all())
 
 
 if __name__ == '__main__':
@@ -328,4 +395,6 @@ if __name__ == '__main__':
                         help='Use adversarial learning on test.')
     parser.add_argument('--dataset', type=str, default='mnist',
                         help='Test Dataset.')
+    parser.add_argument('--any_generalization', action='store_true',
+                        default=False, help='Any systematic generalization.')
     main(parser.parse_args())
