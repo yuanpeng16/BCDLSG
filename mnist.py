@@ -33,6 +33,9 @@ class RandomDataGenerator(object):
 
         self.train_samples = self._prepare_data(x_train, y_train)
         self.test_samples = self._prepare_data(x_test, y_test)
+        self.train_label_pairs = []
+        self.test_label_pairs = []
+        self.get_label_splits()
 
     def _prepare_data(self, x_all, y_all):
         assert len(x_all) == len(y_all)
@@ -45,32 +48,32 @@ class RandomDataGenerator(object):
             data[y].append(x)
         return data
 
+    def get_label_splits(self):
+        for i in range(self.output_nodes):
+            for j in range(self.output_nodes):
+                diff = (j - i + self.output_nodes) % self.output_nodes
+                if diff < 2:
+                    self.train_label_pairs.append((i, j))
+                else:
+                    self.test_label_pairs.append((i, j))
+
+    def get_test_label_pairs(self):
+        return self.test_label_pairs
+
     def _one_hot(self, a):
         ret = [0] * self.output_nodes
         ret[a] = 1
         return ret
 
-    def _get_y(self, y1, isTrain):
-        buf = 1
-        if isTrain:
-            if self.args.mask_input == 2:
-                # second setting
-                y = random.randint(0, self.output_nodes - 1)
-            else:
-                # first setting
-                y = (random.randint(0, buf - 1) + y1)
-        else:
-            y = (random.randint(0, self.output_nodes - 1 - buf) + y1 + buf)
-        y = y % self.output_nodes
-        return y
-
-    def _get_samples(self, samples, k, isTrain):
+    def _get_samples(self, samples, k, is_train):
         x_list, y_list, y2_list = [], [], []
-        for _ in range(k):
-            y = random.randint(0, self.output_nodes - 1)
-            x = random.choice(samples[y])
-            y2 = self._get_y(y, isTrain)
-            x = self._merge(x, y2, samples)
+        if is_train:
+            label_list = random.choices(self.train_label_pairs, k=k)
+        else:
+            label_list = random.choices(self.test_label_pairs, k=k)
+
+        for y, y2 in label_list:
+            x = self._merge(y, y2, samples)
             x_list.append(x)
             y_list.append(self._one_hot(y))
             y2_list.append(self._one_hot(y2))
@@ -80,21 +83,25 @@ class RandomDataGenerator(object):
         return x_list, [y_list, y2_list]
 
     def get_training_samples(self, k):
-        return self._get_samples(self.train_samples, k, isTrain=True)
+        return self._get_samples(self.train_samples, k, is_train=True)
 
     def get_eval_samples(self, k):
         return self.get_training_samples(k)
 
     def get_test_samples(self, k, randomize=False):
         samples, y_list = self._get_samples(self.test_samples, k,
-                                            isTrain=False)
+                                            is_train=False)
         if randomize:
             samples = np.random.rand(*samples.shape)
         return samples, y_list
 
+    def _merge(self, y, y2, samples):
+        pass
+
 
 class LongDataGenerator(RandomDataGenerator):
-    def _merge(self, x1, y2, labels):
+    def _merge(self, y, y2, samples):
+        x1 = random.choice(samples[y])
         x = [0 * x1] * self.output_nodes
         x[y2] = x1
         x = np.concatenate(x, axis=1)
@@ -105,8 +112,9 @@ class LongDataGenerator(RandomDataGenerator):
 
 
 class PairedDataGenerator(RandomDataGenerator):
-    def _merge(self, x1, y2, labels):
-        x2 = random.choice(labels[y2])
+    def _merge(self, y, y2, samples):
+        x1 = random.choice(samples[y])
+        x2 = random.choice(samples[y2])
         x = np.concatenate((x1, x2), axis=1)
         return x
 
@@ -115,8 +123,9 @@ class PairedDataGenerator(RandomDataGenerator):
 
 
 class StackedDataGenerator(RandomDataGenerator):
-    def _merge(self, x1, y2, labels):
-        x2 = random.choice(labels[y2])
+    def _merge(self, y, y2, samples):
+        x1 = random.choice(samples[y])
+        x2 = random.choice(samples[y2])
         x = np.concatenate((x1, x2), axis=-1)
         return x
 
@@ -163,10 +172,11 @@ class DeepModelGenerator(object):
 
 
 class Evaluator(object):
-    def __init__(self, args, model, datasets):
+    def __init__(self, args, model, datasets, test_label_pairs):
         self.args = args
         self.model = model
         self.datasets = datasets
+        self.test_label_pairs = set(test_label_pairs)
         self.loss_object_list = [
             tf.keras.losses.CategoricalCrossentropy(
                 from_logits=True, reduction='none') for _ in range(2)]
@@ -188,10 +198,14 @@ class Evaluator(object):
 
         y_hat = self.model(x)
         n_samples = len(y[0])
-        hit1, hit2, hit = 0, 0, 0
+        hit1, hit2, hit, sg_hit = 0, 0, 0, 0
         for i in range(n_samples):
-            h1 = y[0][i][np.argmax(y_hat[0][i])] == 1
-            h2 = y[1][i][np.argmax(y_hat[1][i])] == 1
+            y1_hat = np.argmax(y_hat[0][i])
+            y2_hat = np.argmax(y_hat[1][i])
+            if (y1_hat, y2_hat) in self.test_label_pairs:
+                sg_hit += 1
+            h1 = y[0][i][y1_hat] == 1
+            h2 = y[1][i][y2_hat] == 1
             if h1:
                 hit1 += 1
             if h2:
@@ -201,7 +215,8 @@ class Evaluator(object):
         acc = hit / n_samples
         acc1 = hit1 / n_samples
         acc2 = hit2 / n_samples
-        return acc1, acc2, acc
+        sg_acc = sg_hit / n_samples
+        return acc1, acc2, acc, sg_acc
 
     def evaluate_all(self, adversarial=False):
         ret = []
@@ -245,8 +260,8 @@ def main(args):
         assert False
 
     eval_data = dg.get_eval_samples(100)
-    test_data = dg.get_test_samples(100,
-                                    randomize=args.test_distribution == 'random')
+    test_data = dg.get_test_samples(
+        100, randomize=args.test_distribution == 'random')
 
     if args.save_image:
         for i in range(5):
@@ -256,7 +271,8 @@ def main(args):
 
     mg = DeepModelGenerator(args, dg.get_input_shape())
     model = mg.get_model()
-    ev = Evaluator(args, model, [eval_data, test_data])
+    ev = Evaluator(args, model, [eval_data, test_data],
+                   dg.get_test_label_pairs())
 
     loss_object = tf.keras.losses.CategoricalHinge()
 
@@ -312,5 +328,4 @@ if __name__ == '__main__':
                         help='Use adversarial learning on test.')
     parser.add_argument('--dataset', type=str, default='mnist',
                         help='Test Dataset.')
-    args = parser.parse_args()
-    main(args)
+    main(parser.parse_args())
