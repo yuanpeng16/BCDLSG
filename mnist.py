@@ -54,11 +54,17 @@ class RandomDataGenerator(object):
             data[y].append(x)
         return data
 
+    def is_train_label(self, x, y):
+        return x < 5 or y < 5
+
+    def is_train_label2(self, x, y):
+        diff = (y - x + self.output_nodes) % self.output_nodes
+        return diff < 2
+
     def get_label_splits(self):
         for i in range(self.output_nodes):
             for j in range(self.output_nodes):
-                diff = (j - i + self.output_nodes) % self.output_nodes
-                if diff < 2:
+                if self.is_train_label(i, j):
                     self.train_label_pairs.append((i, j))
                 else:
                     self.test_label_pairs.append((i, j))
@@ -137,6 +143,16 @@ class StackedDataGenerator(RandomDataGenerator):
         return tuple(np.multiply(self.shape, [1, 1, 2]))
 
 
+class AddedDataGenerator(RandomDataGenerator):
+    def _merge(self, y, y2, samples):
+        x1 = random.choice(samples[y])
+        x2 = random.choice(samples[y2])
+        x = x1 + x2
+        return x
+
+    def get_input_shape(self):
+        return self.shape
+
 class DeepModelGenerator(object):
     def __init__(self, args, input_shape, output_nodes):
         self.args = args
@@ -146,12 +162,12 @@ class DeepModelGenerator(object):
     def get_structure(self):
         inputs = Input(shape=self.input_shape)
         x = inputs
-        for _ in range(2):
+        for _ in range(1):
             x = tf.keras.layers.Conv2D(64, (3, 3), activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
         x = tf.keras.layers.Conv2D(128, (3, 3), activation='relu')(x)
         x = tf.keras.layers.Flatten()(x)
-        for _ in range(8):
+        for _ in range(2):
             x = tf.keras.layers.Dense(64, activation='relu')(x)
 
         if self.args.loss_type == 'hinge':
@@ -314,6 +330,8 @@ def main(args):
         dg = PairedDataGenerator(args)
     elif args.merge_type == 'stacked':
         dg = StackedDataGenerator(args)
+    elif args.merge_type == 'added':
+        dg = AddedDataGenerator(args)
     else:
         assert False
 
@@ -374,13 +392,13 @@ if __name__ == '__main__':
                         help='Number of nodes in hidden layer.')
     parser.add_argument('--loss_type', type=str, default='cross_entropy',
                         help='Loss type.')
-    parser.add_argument('--batch_size', type=int, default=64,
+    parser.add_argument('--batch_size', type=int, default=256,
                         help='Batch size.')
     parser.add_argument('--steps', type=int, default=500,
                         help='Steps.')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate.')
-    parser.add_argument('--merge_type', type=str, default='paired',
+    parser.add_argument('--merge_type', type=str, default='added',
                         help='Merge type.')
     parser.add_argument('--test_distribution', type=str, default='original',
                         help='Test distribution.')
