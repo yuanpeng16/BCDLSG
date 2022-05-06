@@ -67,7 +67,7 @@ class AdversarialEvaluator(Evaluator):
 
     def initialize(self):
         self.loss_object_list = [tf.keras.losses.CategoricalCrossentropy(
-            from_logits=True, reduction='none') for _ in range(2)]
+            from_logits=False, reduction='none') for _ in range(2)]
 
     def one_step(self, x, y, optimizer):
         with tf.GradientTape() as tape:
@@ -100,7 +100,7 @@ class RandomAdversarialEvaluator(AdversarialEvaluator):
         self.loss_object = []
         for output_node in self.output_nodes:
             self.loss_object.append([tf.keras.losses.CategoricalCrossentropy(
-                from_logits=True, reduction='none') for _ in
+                from_logits=False, reduction='none') for _ in
                 range(output_node)])
 
     def one_step(self, x, y, optimizer):

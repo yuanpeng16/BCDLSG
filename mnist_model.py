@@ -14,9 +14,7 @@ class DeepModelGenerator(object):
         self.input_shape = input_shape
         self.output_nodes = output_nodes
 
-    def get_structure(self):
-        inputs = Input(shape=self.input_shape)
-        x = inputs
+    def get_main_model(self, x):
         for _ in range(1):
             x = tf.keras.layers.Conv2D(64, (3, 3), activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
@@ -24,6 +22,12 @@ class DeepModelGenerator(object):
         x = tf.keras.layers.Flatten()(x)
         for _ in range(2):
             x = tf.keras.layers.Dense(64, activation='relu')(x)
+        return x
+
+    def get_structure(self):
+        inputs = Input(shape=self.input_shape)
+        x = inputs
+        x = self.get_main_model(x)
 
         if self.args.loss_type == 'hinge':
             activation = 'linear'
