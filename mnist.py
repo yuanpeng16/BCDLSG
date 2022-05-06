@@ -43,9 +43,8 @@ def main(args):
     print(0, *ev.evaluate_all())
     for i in range(args.steps):
         x_train, y_train = dg.get_training_samples(args.batch_size)
-        model.fit(x_train, y_train,
-                  batch_size=args.batch_size,
-                  epochs=1, verbose=0)
+        model.fit(x_train, y_train, batch_size=args.batch_size, epochs=1,
+                  verbose=0)
         if i % 1 == 0:
             print(i + 1, *ev.evaluate_all())
 
@@ -56,8 +55,6 @@ if __name__ == '__main__':
                         help='Random seed.')
     parser.add_argument('--parameter_random_seed', type=int, default=7,
                         help='Random seed.')
-    parser.add_argument('--mask_input', type=int, default=0,
-                        help='mask a particular input.')
     parser.add_argument('--n_hidden_layers', type=int, default=2,
                         help='Number of hidden layer.')
     parser.add_argument('--n_hidden_nodes', type=int, default=32,
@@ -74,8 +71,6 @@ if __name__ == '__main__':
                         help='Merge type.')
     parser.add_argument('--test_distribution', type=str, default='original',
                         help='Test distribution.')
-    parser.add_argument('--random_threshold', type=float, default=0.85,
-                        help='Threshold to randomize the second input.')
     parser.add_argument('--save_image', action='store_true', default=False,
                         help='Show image and stop.')
     parser.add_argument('--adversarial', action='store_true',

@@ -13,5 +13,4 @@ python3 -u mnist.py \
 --parameter_random_seed 11 \
 --merge_type paired \
 --steps 200 \
---mask_input 0 \
 | tee ${MYDIR}/log.txt
