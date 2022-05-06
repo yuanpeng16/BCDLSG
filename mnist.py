@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function, \
     unicode_literals
 
+import numpy as np
 import tensorflow as tf
 import argparse
 import random
@@ -12,6 +13,7 @@ from mnist_evaluator import get_evaluator
 
 
 def save_image(x, path):
+    x = np.squeeze(x)
     Image.fromarray(255 * x).convert('RGB').save(path)
 
 
@@ -67,7 +69,7 @@ if __name__ == '__main__':
                         help='Steps.')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate.')
-    parser.add_argument('--merge_type', type=str, default='added',
+    parser.add_argument('--merge_type', type=str, default='paired',
                         help='Merge type.')
     parser.add_argument('--test_distribution', type=str, default='original',
                         help='Test distribution.')

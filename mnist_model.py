@@ -9,6 +9,10 @@ def get_model_generator(args, input_shape, output_nodes):
         model = DeepModelGenerator(args, input_shape, output_nodes)
     elif args.model_type == 'cnn':
         model = CNNModelGenerator(args, input_shape, output_nodes)
+    elif args.model_type == 'residual':
+        model = ResidualModelGenerator(args, input_shape, output_nodes)
+    elif args.model_type == 'residual_cnn':
+        model = ResidualCNNModelGenerator(args, input_shape, output_nodes)
     else:
         assert False
     return model
@@ -21,9 +25,10 @@ class DeepModelGenerator(object):
         self.output_nodes = output_nodes
 
     def get_main_model(self, x):
+        hn = self.args.n_hidden_nodes
         x = tf.keras.layers.Flatten()(x)
-        for _ in range(3):
-            x = tf.keras.layers.Dense(64, activation='relu')(x)
+        for _ in range(self.args.n_hidden_layers):
+            x = tf.keras.layers.Dense(hn, activation='relu')(x)
         return x
 
     def get_structure(self):
@@ -54,11 +59,37 @@ class DeepModelGenerator(object):
 
 class CNNModelGenerator(DeepModelGenerator):
     def get_main_model(self, x):
-        for _ in range(1):
-            x = tf.keras.layers.Conv2D(64, (3, 3), activation='relu')(x)
+        hn = self.args.n_hidden_nodes
+        x = tf.keras.layers.Conv2D(hn, (3, 3), activation='relu')(x)
+        for _ in range(self.args.n_hidden_layers):
+            x = tf.keras.layers.Conv2D(hn, (3, 3), activation='relu')(x)
         x = tf.keras.layers.MaxPooling2D((2, 2))(x)
-        x = tf.keras.layers.Conv2D(128, (3, 3), activation='relu')(x)
+        x = tf.keras.layers.Conv2D(2 * hn, (3, 3), activation='relu')(x)
         x = tf.keras.layers.Flatten()(x)
-        for _ in range(2):
-            x = tf.keras.layers.Dense(64, activation='relu')(x)
+        for _ in range(1):
+            x = tf.keras.layers.Dense(hn, activation='relu')(x)
+        return x
+
+
+class ResidualModelGenerator(DeepModelGenerator):
+    def get_main_model(self, x):
+        hn = self.args.n_hidden_nodes
+        x = tf.keras.layers.Flatten()(x)
+        x = tf.keras.layers.Dense(hn, activation='relu')(x)
+        for _ in range(self.args.n_hidden_layers):
+            x += tf.keras.layers.Dense(hn, activation='relu')(x)
+        return x
+
+
+class ResidualCNNModelGenerator(DeepModelGenerator):
+    def get_main_model(self, x):
+        hn = self.args.n_hidden_nodes
+        x = tf.keras.layers.Conv2D(hn, (3, 3), activation='relu')(x)
+        for _ in range(self.args.n_hidden_layers):
+            x += tf.keras.layers.Conv2D(hn, (3, 3), activation='relu', padding='SAME')(x)
+        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        x = tf.keras.layers.Conv2D(2 * hn, (3, 3), activation='relu')(x)
+        x = tf.keras.layers.Flatten()(x)
+        for _ in range(1):
+            x = tf.keras.layers.Dense(hn, activation='relu')(x)
         return x

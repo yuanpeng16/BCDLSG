@@ -153,7 +153,7 @@ class AddedDataGenerator(RandomDataGenerator):
     def _merge(self, y, y2, samples):
         x1 = random.choice(samples[y])
         x2 = random.choice(samples[y2])
-        x = x1 + x2
+        x = 0.5 * (x1 + x2)
         return x
 
     def get_input_shape(self):

@@ -8,9 +8,12 @@ MYDIR=logs/${ID}
 mkdir -p ${MYDIR}
 cp ${ABS_PATH} ${MYDIR}
 
-CUDA_VISIBLE_DEVICES=1 \
+CUDA_VISIBLE_DEVICES=0 \
 python3 -u mnist.py \
 --parameter_random_seed 7 \
---merge_type paired \
---steps 200 \
+--merge_type stacked \
+--model_type residual \
+--n_hidden_layers 10 \
+--n_hidden_nodes 256 \
+--steps 1000 \
 | tee ${MYDIR}/log.txt
