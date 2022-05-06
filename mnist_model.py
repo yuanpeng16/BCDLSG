@@ -5,7 +5,13 @@ from tensorflow.keras.layers import Dense
 
 
 def get_model_generator(args, input_shape, output_nodes):
-    return DeepModelGenerator(args, input_shape, output_nodes)
+    if args.model_type == 'dnn':
+        model = DeepModelGenerator(args, input_shape, output_nodes)
+    elif args.model_type == 'cnn':
+        model = CNNModelGenerator(args, input_shape, output_nodes)
+    else:
+        assert False
+    return model
 
 
 class DeepModelGenerator(object):
@@ -15,19 +21,14 @@ class DeepModelGenerator(object):
         self.output_nodes = output_nodes
 
     def get_main_model(self, x):
-        for _ in range(1):
-            x = tf.keras.layers.Conv2D(64, (3, 3), activation='relu')(x)
-        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
-        x = tf.keras.layers.Conv2D(128, (3, 3), activation='relu')(x)
         x = tf.keras.layers.Flatten()(x)
-        for _ in range(2):
+        for _ in range(3):
             x = tf.keras.layers.Dense(64, activation='relu')(x)
         return x
 
     def get_structure(self):
         inputs = Input(shape=self.input_shape)
-        x = inputs
-        x = self.get_main_model(x)
+        x = self.get_main_model(inputs)
 
         if self.args.loss_type == 'hinge':
             activation = 'linear'
@@ -49,3 +50,15 @@ class DeepModelGenerator(object):
             loss = 'categorical_crossentropy'
         model.compile(optimizer=adam, loss=loss, metrics=['accuracy'])
         return model
+
+
+class CNNModelGenerator(DeepModelGenerator):
+    def get_main_model(self, x):
+        for _ in range(1):
+            x = tf.keras.layers.Conv2D(64, (3, 3), activation='relu')(x)
+        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
+        x = tf.keras.layers.Conv2D(128, (3, 3), activation='relu')(x)
+        x = tf.keras.layers.Flatten()(x)
+        for _ in range(2):
+            x = tf.keras.layers.Dense(64, activation='relu')(x)
+        return x

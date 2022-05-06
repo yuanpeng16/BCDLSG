@@ -80,4 +80,6 @@ if __name__ == '__main__':
                         help='Test Dataset.')
     parser.add_argument('--any_generalization', action='store_true',
                         default=False, help='Any systematic generalization.')
+    parser.add_argument('--model_type', type=str, default='cnn',
+                        help='Model type.')
     main(parser.parse_args())
