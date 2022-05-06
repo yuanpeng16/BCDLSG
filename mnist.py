@@ -17,13 +17,15 @@ class RandomDataGenerator(object):
         self.output_nodes = 10
 
         if args.dataset == 'mnist':
-            mnist = tf.keras.datasets.mnist
+            dataset = tf.keras.datasets.mnist
         elif args.dataset == 'cifar10':
-            mnist = tf.keras.datasets.cifar10
+            dataset = tf.keras.datasets.cifar10
+        elif args.dataset == 'fashion_mnist':
+            dataset = tf.keras.datasets.fashion_mnist
         else:
             assert False
 
-        (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        (x_train, y_train), (x_test, y_test) = dataset.load_data()
         if len(x_train.shape) == 3:
             x_train = np.expand_dims(x_train, -1)
             x_test = np.expand_dims(x_test, -1)
