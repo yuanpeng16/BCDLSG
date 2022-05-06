@@ -16,8 +16,19 @@ class RandomDataGenerator(object):
         self.args = args
         self.output_nodes = 10
 
-        mnist = tf.keras.datasets.mnist
+        if args.dataset == 'mnist':
+            mnist = tf.keras.datasets.mnist
+        elif args.dataset == 'cifar10':
+            mnist = tf.keras.datasets.cifar10
+        else:
+            assert False
+
         (x_train, y_train), (x_test, y_test) = mnist.load_data()
+        if len(x_train.shape) == 3:
+            x_train = np.expand_dims(x_train, -1)
+            x_test = np.expand_dims(x_test, -1)
+        self.shape = x_train.shape[1:]
+
         self.train_samples = self._prepare_data(x_train, y_train)
         self.test_samples = self._prepare_data(x_test, y_test)
 
@@ -84,38 +95,31 @@ class LongDataGenerator(RandomDataGenerator):
     def _merge(self, x1, y2, labels):
         x = [0 * x1] * self.output_nodes
         x[y2] = x1
-
         x = np.concatenate(x, axis=1)
-        x = np.expand_dims(x, -1)
         return x
 
     def get_input_shape(self):
-        return (28, 28 * self.output_nodes, 1)
+        return tuple(np.multiply(self.shape, [1, self.output_nodes, 1]))
 
 
 class PairedDataGenerator(RandomDataGenerator):
     def _merge(self, x1, y2, labels):
         x2 = random.choice(labels[y2])
-
         x = np.concatenate((x1, x2), axis=1)
-        x = np.expand_dims(x, -1)
         return x
 
     def get_input_shape(self):
-        return (28, 28 * 2, 1)
+        return tuple(np.multiply(self.shape, [1, 2, 1]))
 
 
 class StackedDataGenerator(RandomDataGenerator):
     def _merge(self, x1, y2, labels):
         x2 = random.choice(labels[y2])
-
-        x1 = np.expand_dims(x1, -1)
-        x2 = np.expand_dims(x2, -1)
         x = np.concatenate((x1, x2), axis=-1)
         return x
 
     def get_input_shape(self):
-        return (28, 28, 2)
+        return tuple(np.multiply(self.shape, [1, 1, 2]))
 
 
 class DeepModelGenerator(object):
@@ -304,5 +308,7 @@ if __name__ == '__main__':
     parser.add_argument('--adversarial', action='store_true',
                         default=False,
                         help='Use adversarial learning on test.')
+    parser.add_argument('--dataset', type=str, default='mnist',
+                        help='Test Dataset.')
     args = parser.parse_args()
     main(args)
