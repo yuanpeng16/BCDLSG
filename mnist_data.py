@@ -76,11 +76,16 @@ class RandomDataGenerator(object):
         return data
 
     def is_train_label(self, x, y):
-        return x < 5 or y < 5
-
-    def is_train_label2(self, x, y):
-        diff = (y - x + self.output_nodes) % self.output_nodes
-        return diff < 2
+        if self.args.label_split == 'tile':
+            return x < 5 or y < 5
+        elif self.args.label_split == 'one_shot':
+            return x == 0 or y == 0
+        elif self.args.label_split == 'many_shot':
+            return x < 9 or y < 9
+        elif self.args.label_split == 'diagonal':
+            diff = (y - x + self.output_nodes) % self.output_nodes
+            return diff < 5
+        assert False
 
     def get_label_splits(self):
         for i in range(self.output_nodes):
@@ -166,7 +171,7 @@ class PairedDataGenerator(RandomDataGenerator):
         return x
 
     def get_input_shape(self):
-        return self.shape1[0],\
+        return self.shape1[0], \
                self.shape1[1] + self.shape2[1], self.shape1[2]
 
 
@@ -180,7 +185,7 @@ class StackedDataGenerator(RandomDataGenerator):
         return x
 
     def get_input_shape(self):
-        return self.shape1[0],\
+        return self.shape1[0], \
                self.shape1[1], self.shape1[2] + self.shape2[2]
 
 

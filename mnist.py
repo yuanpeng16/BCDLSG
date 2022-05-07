@@ -90,4 +90,6 @@ if __name__ == '__main__':
                         help='Model type.')
     parser.add_argument('--input_permutation', action='store_true',
                         default=False, help='Permutate input.')
+    parser.add_argument('--label_split', type=str, default='tile',
+                        help='Model type.')
     main(parser.parse_args())
