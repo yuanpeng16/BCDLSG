@@ -12,6 +12,8 @@ def get_data_generator(args):
         dg = StackedDataGenerator(args)
     elif args.merge_type == 'added':
         dg = AddedDataGenerator(args)
+    elif args.merge_type == 'max':
+        dg = MaxDataGenerator(args)
     else:
         assert False
     return dg
@@ -196,6 +198,9 @@ class StackedDataGenerator(RandomDataGenerator):
 
 
 class AddedDataGenerator(RandomDataGenerator):
+    def overlap(self, x1, x2):
+        return 0.5 * (x1 + x2)
+
     def _merge(self, y, y2, samples1, samples2):
         x1 = random.choice(samples1[y])
         x2 = random.choice(samples2[y2])
@@ -203,9 +208,12 @@ class AddedDataGenerator(RandomDataGenerator):
         assert self.shape1[1] == self.shape2[1]
         assert self.shape1[2] == self.shape2[2] \
                or self.shape1[2] == 1 or self.shape2[2] == 1
-        x = 0.5 * (x1 + x2)
-        return x
+        return self.overlap(x1, x2)
 
     def get_input_shape(self):
-        return self.shape1[0], \
-               self.shape1[1], max(self.shape1[2], self.shape2[2])
+        return tuple(np.maximum(self.shape1, self.shape2))
+
+
+class MaxDataGenerator(AddedDataGenerator):
+    def overlap(self, x1, x2):
+        return np.maximum(x1, x2)
