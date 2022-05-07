@@ -85,6 +85,10 @@ class RandomDataGenerator(object):
         elif self.args.label_split == 'diagonal':
             diff = (y - x + self.output_nodes) % self.output_nodes
             return diff < 5
+        elif self.args.label_split == 'one_shot_diagonal':
+            return x == y
+        elif self.args.label_split == 'many_shot_diagonal':
+            return x != y
         assert False
 
     def get_label_splits(self):
