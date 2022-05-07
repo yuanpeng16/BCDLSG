@@ -28,11 +28,24 @@ class RandomDataGenerator(object):
         self.args = args
         self.output_nodes = 10
 
-        if args.dataset == 'mnist':
+        samples1 = self._get_data(args.dataset1)
+        if args.dataset1 == args.dataset2:
+            samples2 = samples1
+        else:
+            samples2 = self._get_data(args.dataset2)
+        self.train_samples1, self.test_samples1, self.shape1 = samples1
+        self.train_samples2, self.test_samples2, self.shape2 = samples2
+
+        self.train_label_pairs = []
+        self.test_label_pairs = []
+        self.get_label_splits()
+
+    def _get_data(self, data_name):
+        if data_name == 'mnist':
             dataset = tf.keras.datasets.mnist
-        elif args.dataset == 'cifar10':
+        elif data_name == 'cifar10':
             dataset = tf.keras.datasets.cifar10
-        elif args.dataset == 'fashion_mnist':
+        elif data_name == 'fashion_mnist':
             dataset = tf.keras.datasets.fashion_mnist
         else:
             assert False
@@ -41,13 +54,10 @@ class RandomDataGenerator(object):
         if len(x_train.shape) == 3:
             x_train = np.expand_dims(x_train, -1)
             x_test = np.expand_dims(x_test, -1)
-        self.shape = x_train.shape[1:]
-
-        self.train_samples = self._prepare_data(x_train, y_train)
-        self.test_samples = self._prepare_data(x_test, y_test)
-        self.train_label_pairs = []
-        self.test_label_pairs = []
-        self.get_label_splits()
+        shape = x_train.shape[1:]
+        train_samples = self._prepare_data(x_train, y_train)
+        test_samples = self._prepare_data(x_test, y_test)
+        return train_samples, test_samples, shape
 
     def _prepare_data(self, x_all, y_all):
         assert len(x_all) == len(y_all)
@@ -81,7 +91,7 @@ class RandomDataGenerator(object):
     def get_output_nodes(self):
         return self.output_nodes
 
-    def _get_samples(self, samples, k, is_train):
+    def _get_samples(self, samples1, samples2, k, is_train):
         x_list, y_list, y2_list = [], [], []
         if is_train:
             label_list = random.choices(self.train_label_pairs, k=k)
@@ -89,7 +99,7 @@ class RandomDataGenerator(object):
             label_list = random.choices(self.test_label_pairs, k=k)
 
         for y, y2 in label_list:
-            x = self._merge(y, y2, samples)
+            x = self._merge(y, y2, samples1, samples2)
             x_list.append(x)
             y_list.append(one_hot(y, self.output_nodes))
             y2_list.append(one_hot(y2, self.output_nodes))
@@ -99,62 +109,72 @@ class RandomDataGenerator(object):
         return x_list, [y_list, y2_list]
 
     def get_training_samples(self, k):
-        return self._get_samples(self.train_samples, k, is_train=True)
+        return self._get_samples(self.train_samples1, self.train_samples2, k,
+                                 is_train=True)
 
     def get_eval_samples(self, k):
         return self.get_training_samples(k)
 
     def get_test_samples(self, k, randomize=False):
-        samples, y_list = self._get_samples(self.test_samples, k,
-                                            is_train=False)
+        samples, y_list = self._get_samples(
+            self.test_samples1, self.test_samples2, k, is_train=False)
         if randomize:
             samples = np.random.rand(*samples.shape)
         return samples, y_list
 
-    def _merge(self, y, y2, samples):
+    def _merge(self, y, y2, samples1, samples2):
         pass
 
 
 class LongDataGenerator(RandomDataGenerator):
-    def _merge(self, y, y2, samples):
-        x1 = random.choice(samples[y])
+    def _merge(self, y, y2, samples1, samples2):
+        x1 = random.choice(samples1[y])
         x = [0 * x1] * self.output_nodes
         x[y2] = x1
         x = np.concatenate(x, axis=1)
         return x
 
     def get_input_shape(self):
-        return tuple(np.multiply(self.shape, [1, self.output_nodes, 1]))
+        return tuple(np.multiply(self.shape1, [1, self.output_nodes, 1]))
 
 
 class PairedDataGenerator(RandomDataGenerator):
-    def _merge(self, y, y2, samples):
-        x1 = random.choice(samples[y])
-        x2 = random.choice(samples[y2])
+    def _merge(self, y, y2, samples1, samples2):
+        x1 = random.choice(samples1[y])
+        x2 = random.choice(samples2[y2])
+        assert self.shape1[0] == self.shape2[0]
+        assert self.shape1[2] == self.shape2[2]
         x = np.concatenate((x1, x2), axis=1)
         return x
 
     def get_input_shape(self):
-        return tuple(np.multiply(self.shape, [1, 2, 1]))
+        return self.shape1[0],\
+               self.shape1[1] + self.shape2[1], self.shape1[2]
 
 
 class StackedDataGenerator(RandomDataGenerator):
-    def _merge(self, y, y2, samples):
-        x1 = random.choice(samples[y])
-        x2 = random.choice(samples[y2])
+    def _merge(self, y, y2, samples1, samples2):
+        x1 = random.choice(samples1[y])
+        x2 = random.choice(samples2[y2])
+        assert self.shape1[0] == self.shape2[0]
+        assert self.shape1[1] == self.shape2[1]
         x = np.concatenate((x1, x2), axis=-1)
         return x
 
     def get_input_shape(self):
-        return tuple(np.multiply(self.shape, [1, 1, 2]))
+        return self.shape1[0],\
+               self.shape1[1], self.shape1[2] + self.shape2[2]
 
 
 class AddedDataGenerator(RandomDataGenerator):
-    def _merge(self, y, y2, samples):
-        x1 = random.choice(samples[y])
-        x2 = random.choice(samples[y2])
+    def _merge(self, y, y2, samples1, samples2):
+        x1 = random.choice(samples1[y])
+        x2 = random.choice(samples2[y2])
+        assert self.shape1[0] == self.shape2[0]
+        assert self.shape1[1] == self.shape2[1]
+        assert self.shape1[2] == self.shape2[2]
         x = 0.5 * (x1 + x2)
         return x
 
     def get_input_shape(self):
-        return self.shape
+        return self.shape1

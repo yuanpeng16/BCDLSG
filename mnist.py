@@ -80,7 +80,9 @@ if __name__ == '__main__':
     parser.add_argument('--adversarial', action='store_true',
                         default=False,
                         help='Use adversarial learning on test.')
-    parser.add_argument('--dataset', type=str, default='mnist',
+    parser.add_argument('--dataset1', type=str, default='mnist',
+                        help='Test Dataset.')
+    parser.add_argument('--dataset2', type=str, default='mnist',
                         help='Test Dataset.')
     parser.add_argument('--any_generalization', action='store_true',
                         default=False, help='Any systematic generalization.')

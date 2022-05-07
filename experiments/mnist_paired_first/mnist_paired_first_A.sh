@@ -16,5 +16,7 @@ python3 -u mnist.py \
 --n_common_layers 5 \
 --n_separate_layers 1 \
 --n_hidden_nodes 32 \
+--dataset1 fashion_mnist \
+--dataset2 mnist \
 --steps 200 \
 | tee ${MYDIR}/log.txt
