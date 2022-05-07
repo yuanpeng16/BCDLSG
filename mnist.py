@@ -88,4 +88,6 @@ if __name__ == '__main__':
                         default=False, help='Any systematic generalization.')
     parser.add_argument('--model_type', type=str, default='cnn',
                         help='Model type.')
+    parser.add_argument('--input_permutation', action='store_true',
+                        default=False, help='Permutate input.')
     main(parser.parse_args())

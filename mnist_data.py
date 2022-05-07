@@ -40,6 +40,11 @@ class RandomDataGenerator(object):
         self.test_label_pairs = []
         self.get_label_splits()
 
+        shape = self.get_input_shape()
+        size = np.prod(shape)
+        self.permutation_mapping = list(range(size))
+        random.shuffle(self.permutation_mapping)
+
     def _get_data(self, data_name):
         if data_name == 'mnist':
             dataset = tf.keras.datasets.mnist
@@ -91,6 +96,14 @@ class RandomDataGenerator(object):
     def get_output_nodes(self):
         return self.output_nodes
 
+    def _permutate(self, x):
+        shape = x.shape
+        x_flat = np.reshape(x, [-1])
+        y_flat = [
+            x_flat[self.permutation_mapping[i]] for i in range(len(x_flat))]
+        y = np.reshape(y_flat, shape)
+        return y
+
     def _get_samples(self, samples1, samples2, k, is_train):
         x_list, y_list, y2_list = [], [], []
         if is_train:
@@ -100,6 +113,8 @@ class RandomDataGenerator(object):
 
         for y, y2 in label_list:
             x = self._merge(y, y2, samples1, samples2)
+            if self.args.input_permutation:
+                x = self._permutate(x)
             x_list.append(x)
             y_list.append(one_hot(y, self.output_nodes))
             y2_list.append(one_hot(y2, self.output_nodes))
@@ -123,6 +138,9 @@ class RandomDataGenerator(object):
         return samples, y_list
 
     def _merge(self, y, y2, samples1, samples2):
+        pass
+
+    def get_input_shape(self):
         pass
 
 
