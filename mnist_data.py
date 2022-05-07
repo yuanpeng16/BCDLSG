@@ -201,9 +201,11 @@ class AddedDataGenerator(RandomDataGenerator):
         x2 = random.choice(samples2[y2])
         assert self.shape1[0] == self.shape2[0]
         assert self.shape1[1] == self.shape2[1]
-        assert self.shape1[2] == self.shape2[2]
+        assert self.shape1[2] == self.shape2[2] \
+               or self.shape1[2] == 1 or self.shape2[2] == 1
         x = 0.5 * (x1 + x2)
         return x
 
     def get_input_shape(self):
-        return self.shape1
+        return self.shape1[0], \
+               self.shape1[1], max(self.shape1[2], self.shape2[2])
