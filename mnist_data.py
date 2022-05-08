@@ -204,27 +204,34 @@ class PairedDataGenerator(RandomDataGenerator):
         x1 = random.choice(samples1[y])
         x2 = random.choice(samples2[y2])
         assert x1.shape[0] == x2.shape[0]
-        assert x1.shape[2] == x2.shape[2]
+        if x1.shape[2] != x2.shape[2]:
+            if x1.shape[2] == 1:
+                x1 = np.broadcast_to(x1, x2.shape)
+            elif x2.shape[2] == 1:
+                x2 = np.broadcast_to(x2, x1.shape)
+            else:
+                assert False
         x = np.concatenate((x1, x2), axis=1)
         return x
 
     def compute_input_shape(self):
-        return self.shape1[0], \
-               self.shape1[1] + self.shape2[0], self.shape1[2]
+        shape = self.compute_one_input_shape()
+        return tuple(np.multiply(shape, [1, 2, 1]))
 
 
 class StackedDataGenerator(RandomDataGenerator):
     def _merge(self, y, y2, samples1, samples2):
         x1 = random.choice(samples1[y])
         x2 = random.choice(samples2[y2])
-        assert self.shape1[0] == self.shape2[0]
-        assert self.shape1[1] == self.shape2[1]
+        assert x1.shape[0] == x2.shape[0]
+        assert x1.shape[1] == x2.shape[1]
         x = np.concatenate((x1, x2), axis=-1)
         return x
 
     def compute_input_shape(self):
-        return self.shape1[0], \
-               self.shape1[1], self.shape1[2] + self.shape2[2]
+        shape = self.compute_one_input_shape()
+        depth = self.shape1[2] + self.shape2[2]
+        return shape[0], shape[1], depth
 
 
 class AddedDataGenerator(RandomDataGenerator):
