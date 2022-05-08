@@ -28,6 +28,31 @@ class Evaluator(object):
         y_hat = self.model(x)
         n_samples = len(y[0])
         hit1, hit2, hit, sg_hit = 0, 0, 0, 0
+        y1_hat_list = np.argmax(y_hat[0], -1)
+        y2_hat_list = np.argmax(y_hat[1], -1)
+        for i in range(n_samples):
+            y1_hat = y1_hat_list[i]
+            y2_hat = y2_hat_list[i]
+            if (y1_hat, y2_hat) in self.test_label_pairs:
+                sg_hit += 1
+            h1 = y[0][i][y1_hat] == 1
+            h2 = y[1][i][y2_hat] == 1
+            if h1:
+                hit1 += 1
+            if h2:
+                hit2 += 1
+            if h1 and h2:
+                hit += 1
+        acc = hit / n_samples
+        acc1 = hit1 / n_samples
+        acc2 = hit2 / n_samples
+        sg_acc = sg_hit / n_samples
+        return acc1, acc2, acc, sg_acc
+
+    def evaluate2(self, x, y):
+        y_hat = self.model(x)
+        n_samples = len(y[0])
+        hit1, hit2, hit, sg_hit = 0, 0, 0, 0
         for i in range(n_samples):
             y1_hat = np.argmax(y_hat[0][i])
             y2_hat = np.argmax(y_hat[1][i])

@@ -14,7 +14,7 @@ from mnist_evaluator import get_evaluator
 
 def save_image(x, path):
     x = np.squeeze(x)
-    Image.fromarray(255 * x).convert('RGB').save(path)
+    Image.fromarray(np.uint8(255 * x)).convert('RGB').save(path)
 
 
 def main(args):

@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import random
+from PIL import Image
 
 
 def get_data_generator(args):
@@ -30,22 +31,24 @@ class RandomDataGenerator(object):
         self.args = args
         self.output_nodes = 10
 
-        samples1 = self._get_data(args.dataset1)
-        if args.dataset1 == args.dataset2:
-            samples2 = samples1
-        else:
-            samples2 = self._get_data(args.dataset2)
-        self.train_samples1, self.test_samples1, self.shape1 = samples1
-        self.train_samples2, self.test_samples2, self.shape2 = samples2
+        train1, test1, self.shape1 = self._get_data(args.dataset1)
+        train2, test2, self.shape2 = self._get_data(args.dataset2)
+        self.input_shape = self.compute_input_shape()
+
+        if self.args.input_permutation:
+            size = np.prod(self.input_shape)
+            self.permutation_mapping = list(range(size))
+            random.shuffle(self.permutation_mapping)
+
+        # Preprocessing
+        self.train_samples1 = self._prepare_data(train1, False)
+        self.test_samples1 = self._prepare_data(test1, False)
+        self.train_samples2 = self._prepare_data(train2, True)
+        self.test_samples2 = self._prepare_data(test2, True)
 
         self.train_label_pairs = []
         self.test_label_pairs = []
         self.get_label_splits()
-
-        shape = self.get_input_shape()
-        size = np.prod(shape)
-        self.permutation_mapping = list(range(size))
-        random.shuffle(self.permutation_mapping)
 
     def _get_data(self, data_name):
         if data_name == 'mnist':
@@ -62,20 +65,41 @@ class RandomDataGenerator(object):
             x_train = np.expand_dims(x_train, -1)
             x_test = np.expand_dims(x_test, -1)
         shape = x_train.shape[1:]
-        train_samples = self._prepare_data(x_train, y_train)
-        test_samples = self._prepare_data(x_test, y_test)
+        train_samples = [x_train, y_train]
+        test_samples = [x_test, y_test]
         return train_samples, test_samples, shape
 
-    def _prepare_data(self, x_all, y_all):
+    def resize(self, x, size, rotate):
+        if not rotate and x.shape[0] == size[0] and x.shape[1] == size[1]:
+            return x
+        if x.shape[-1] == 1:
+            x = np.squeeze(x)
+        x = Image.fromarray(np.uint8(255 * x))
+        if rotate:
+            x = x.rotate(90)
+        if x.size[0] != size[0] or x.size[1] != size[1]:
+            x = x.resize(size)
+        x = np.array(x) / 255.0
+        if len(x.shape) < 3:
+            x = np.expand_dims(x, -1)
+        return x
+
+    def _prepare_data(self, data, rotate):
+        x_all, y_all = data
         assert len(x_all) == len(y_all)
         x_all = x_all / 255.0
         x_all = x_all.astype("float32")
 
+        size = self.input_shape[:2]
         data = [[] for _ in range(self.output_nodes)]
         for x, y in zip(x_all, y_all):
             y = int(y)
+            x = self.resize(x, size, rotate)
             data[y].append(x)
         return data
+
+    def get_input_shape(self):
+        return self.input_shape
 
     def is_train_label(self, x, y):
         if self.args.label_split == 'tile':
@@ -153,7 +177,7 @@ class RandomDataGenerator(object):
     def _merge(self, y, y2, samples1, samples2):
         pass
 
-    def get_input_shape(self):
+    def compute_input_shape(self):
         pass
 
 
@@ -165,7 +189,7 @@ class LongDataGenerator(RandomDataGenerator):
         x = np.concatenate(x, axis=1)
         return x
 
-    def get_input_shape(self):
+    def compute_input_shape(self):
         return tuple(np.multiply(self.shape1, [1, self.output_nodes, 1]))
 
 
@@ -178,7 +202,7 @@ class PairedDataGenerator(RandomDataGenerator):
         x = np.concatenate((x1, x2), axis=1)
         return x
 
-    def get_input_shape(self):
+    def compute_input_shape(self):
         return self.shape1[0], \
                self.shape1[1] + self.shape2[1], self.shape1[2]
 
@@ -192,7 +216,7 @@ class StackedDataGenerator(RandomDataGenerator):
         x = np.concatenate((x1, x2), axis=-1)
         return x
 
-    def get_input_shape(self):
+    def compute_input_shape(self):
         return self.shape1[0], \
                self.shape1[1], self.shape1[2] + self.shape2[2]
 
@@ -204,14 +228,17 @@ class AddedDataGenerator(RandomDataGenerator):
     def _merge(self, y, y2, samples1, samples2):
         x1 = random.choice(samples1[y])
         x2 = random.choice(samples2[y2])
-        assert self.shape1[0] == self.shape2[0]
-        assert self.shape1[1] == self.shape2[1]
-        assert self.shape1[2] == self.shape2[2] \
-               or self.shape1[2] == 1 or self.shape2[2] == 1
+        assert x1.shape[0] == x2.shape[0]
+        assert x1.shape[1] == x2.shape[1]
+        assert x1.shape[2] == x2.shape[2] \
+               or x1.shape[2] == 1 or x2.shape[2] == 1
         return self.overlap(x1, x2)
 
-    def get_input_shape(self):
-        return tuple(np.maximum(self.shape1, self.shape2))
+    def compute_input_shape(self):
+        s1 = max(self.shape1[0], self.shape2[1])
+        s2 = max(self.shape1[1], self.shape2[0])
+        s3 = max(self.shape1[2], self.shape2[2])
+        return s1, s2, s3
 
 
 class MaxDataGenerator(AddedDataGenerator):
