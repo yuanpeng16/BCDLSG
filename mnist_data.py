@@ -90,7 +90,7 @@ class RandomDataGenerator(object):
         x_all = x_all / 255.0
         x_all = x_all.astype("float32")
 
-        size = self.input_shape[:2]
+        size = self.compute_one_input_shape()[:2]
         data = [[] for _ in range(self.output_nodes)]
         for x, y in zip(x_all, y_all):
             y = int(y)
@@ -174,6 +174,12 @@ class RandomDataGenerator(object):
             samples = np.random.rand(*samples.shape)
         return samples, y_list
 
+    def compute_one_input_shape(self):
+        s1 = max(self.shape1[0], self.shape2[1])
+        s2 = max(self.shape1[1], self.shape2[0])
+        s3 = max(self.shape1[2], self.shape2[2])
+        return s1, s2, s3
+
     def _merge(self, y, y2, samples1, samples2):
         pass
 
@@ -197,14 +203,14 @@ class PairedDataGenerator(RandomDataGenerator):
     def _merge(self, y, y2, samples1, samples2):
         x1 = random.choice(samples1[y])
         x2 = random.choice(samples2[y2])
-        assert self.shape1[0] == self.shape2[0]
-        assert self.shape1[2] == self.shape2[2]
+        assert x1.shape[0] == x2.shape[0]
+        assert x1.shape[2] == x2.shape[2]
         x = np.concatenate((x1, x2), axis=1)
         return x
 
     def compute_input_shape(self):
         return self.shape1[0], \
-               self.shape1[1] + self.shape2[1], self.shape1[2]
+               self.shape1[1] + self.shape2[0], self.shape1[2]
 
 
 class StackedDataGenerator(RandomDataGenerator):
@@ -235,10 +241,7 @@ class AddedDataGenerator(RandomDataGenerator):
         return self.overlap(x1, x2)
 
     def compute_input_shape(self):
-        s1 = max(self.shape1[0], self.shape2[1])
-        s2 = max(self.shape1[1], self.shape2[0])
-        s3 = max(self.shape1[2], self.shape2[2])
-        return s1, s2, s3
+        return self.compute_one_input_shape()
 
 
 class MaxDataGenerator(AddedDataGenerator):

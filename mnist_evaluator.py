@@ -27,9 +27,9 @@ class Evaluator(object):
     def evaluate(self, x, y):
         y_hat = self.model(x)
         n_samples = len(y[0])
-        hit1, hit2, hit, sg_hit = 0, 0, 0, 0
         y1_hat_list = np.argmax(y_hat[0], -1)
         y2_hat_list = np.argmax(y_hat[1], -1)
+        hit1, hit2, hit, sg_hit = 0, 0, 0, 0
         for i in range(n_samples):
             y1_hat = y1_hat_list[i]
             y2_hat = y2_hat_list[i]
