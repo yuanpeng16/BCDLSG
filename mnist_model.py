@@ -76,34 +76,32 @@ class CNNModelGenerator(DeepModelGenerator):
                                       padding='SAME')(x)
 
     def post_layers(self, hn, x):
-        x = tf.keras.layers.MaxPooling2D((2, 2))(x)
-        x = tf.keras.layers.Conv2D(2 * hn, (3, 3), activation='relu')(x)
         x = tf.keras.layers.Flatten()(x)
         x = tf.keras.layers.Dense(hn, activation='relu')(x)
         return x
 
     def get_main_model(self, x):
         hn = self.args.n_hidden_nodes
-        x = tf.keras.layers.Conv2D(hn, (3, 3), activation='relu')(x)
         x1, x2 = self.get_core_structure(self.args.n_hidden_nodes, x)
         x1 = self.post_layers(hn, x1)
         x2 = self.post_layers(hn, x2)
         return x1, x2
 
 
+def residual(x, layer):
+    comparison = np.array(x.shape) == np.array(layer.shape)
+    if comparison.all():
+        layer += x
+    return layer
+
+
 class ResidualModelGenerator(DeepModelGenerator):
     def get_one_layer(self, hn, x):
         layer = super().get_one_layer(hn, x)
-        comparison = np.array(x.shape) == np.array(layer.shape)
-        if comparison.all():
-            layer += x
-        return layer
+        return residual(x, layer)
 
 
 class ResidualCNNModelGenerator(CNNModelGenerator):
     def get_one_layer(self, hn, x):
         layer = super().get_one_layer(hn, x)
-        comparison = np.array(x.shape) == np.array(layer.shape)
-        if comparison.all():
-            layer += x
-        return layer
+        return residual(x, layer)
