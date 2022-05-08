@@ -5,6 +5,7 @@ import numpy as np
 import tensorflow as tf
 import argparse
 import random
+import os
 from PIL import Image
 
 from mnist_data import get_data_generator
@@ -30,9 +31,10 @@ def main(args):
 
     if args.save_image:
         for i in range(5):
-            save_image(eval_data[0][i], 'eval_' + str(i) + '.png')
-            save_image(test_data[0][i], 'test_' + str(i) + '.png')
-        return
+            save_image(eval_data[0][i],
+                       os.path.join(args.log_dir, 'eval_' + str(i) + '.png'))
+            save_image(test_data[0][i],
+                       os.path.join(args.log_dir, 'test_' + str(i) + '.png'))
 
     # get model and evaluator
     output_nodes = dg.get_output_nodes()
@@ -53,6 +55,8 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
+    parser.add_argument('--log_dir', type=str, default='',
+                        help='Log directory.')
     parser.add_argument('--data_random_seed', type=int, default=8,
                         help='Random seed.')
     parser.add_argument('--parameter_random_seed', type=int, default=7,
