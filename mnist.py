@@ -49,7 +49,7 @@ def main(args):
         x_train, y_train = dg.get_training_samples(args.batch_size)
         model.fit(x_train, y_train, batch_size=args.batch_size, epochs=1,
                   verbose=0)
-        if i % 1 == 0:
+        if i % args.log_interval == args.log_interval - 1:
             print(i + 1, *ev.evaluate_all())
 
 
@@ -71,6 +71,8 @@ if __name__ == '__main__':
                         help='Loss type.')
     parser.add_argument('--batch_size', type=int, default=256,
                         help='Batch size.')
+    parser.add_argument('--log_interval', type=int, default=10,
+                        help='Log interval.')
     parser.add_argument('--steps', type=int, default=500,
                         help='Steps.')
     parser.add_argument('--lr', type=float, default=0.001,
