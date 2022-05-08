@@ -92,4 +92,6 @@ if __name__ == '__main__':
                         default=False, help='Permutate input.')
     parser.add_argument('--label_split', type=str, default='tile',
                         help='Model type.')
+    parser.add_argument('--rotate_second_input', action='store_true',
+                        default=False, help='Rotate second input.')
     main(parser.parse_args())

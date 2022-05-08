@@ -33,6 +33,9 @@ class RandomDataGenerator(object):
 
         train1, test1, self.shape1 = self._get_data(args.dataset1)
         train2, test2, self.shape2 = self._get_data(args.dataset2)
+        rotate = args.rotate_second_input
+        if rotate:
+            self.shape2 = (self.shape2[1], self.shape2[0], self.shape2[2])
         self.input_shape = self.compute_input_shape()
 
         if self.args.input_permutation:
@@ -43,8 +46,8 @@ class RandomDataGenerator(object):
         # Preprocessing
         self.train_samples1 = self._prepare_data(train1, False)
         self.test_samples1 = self._prepare_data(test1, False)
-        self.train_samples2 = self._prepare_data(train2, True)
-        self.test_samples2 = self._prepare_data(test2, True)
+        self.train_samples2 = self._prepare_data(train2, rotate)
+        self.test_samples2 = self._prepare_data(test2, rotate)
 
         self.train_label_pairs = []
         self.test_label_pairs = []
@@ -175,10 +178,7 @@ class RandomDataGenerator(object):
         return samples, y_list
 
     def compute_one_input_shape(self):
-        s1 = max(self.shape1[0], self.shape2[1])
-        s2 = max(self.shape1[1], self.shape2[0])
-        s3 = max(self.shape1[2], self.shape2[2])
-        return s1, s2, s3
+        return tuple(np.maximum(self.shape1, self.shape2))
 
     def _merge(self, y, y2, samples1, samples2):
         pass
