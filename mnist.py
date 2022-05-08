@@ -26,8 +26,8 @@ def main(args):
     # get data
     dg = get_data_generator(args)
     randomize = args.test_distribution == 'random'
-    eval_data = dg.get_eval_samples(100)
-    test_data = dg.get_test_samples(100, randomize=randomize)
+    eval_data = dg.get_eval_samples(args.test_sample_size)
+    test_data = dg.get_test_samples(args.test_sample_size, randomize=randomize)
 
     if args.save_image:
         for i in range(5):
@@ -71,6 +71,8 @@ if __name__ == '__main__':
                         help='Loss type.')
     parser.add_argument('--batch_size', type=int, default=256,
                         help='Batch size.')
+    parser.add_argument('--test_sample_size', type=int, default=1000,
+                        help='Test sample size.')
     parser.add_argument('--log_interval', type=int, default=10,
                         help='Log interval.')
     parser.add_argument('--steps', type=int, default=500,

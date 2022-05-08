@@ -24,8 +24,18 @@ class Evaluator(object):
         self.datasets = datasets
         self.test_label_pairs = set(test_label_pairs)
 
+    def forward(self, x):
+        y1_hat, y2_hat = [], []
+        size = self.args.batch_size
+        for i in range(0, len(x), size):
+            j = min(i + size, len(x))
+            y1, y2 = self.model(x[i:j])
+            y1_hat.extend(y1)
+            y2_hat.extend(y2)
+        return y1_hat, y2_hat
+
     def evaluate(self, x, y):
-        y_hat = self.model(x)
+        y_hat = self.forward(x)
         n_samples = len(y[0])
         y1_hat_list = np.argmax(y_hat[0], -1)
         y2_hat_list = np.argmax(y_hat[1], -1)
