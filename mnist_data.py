@@ -77,12 +77,12 @@ class RandomDataGenerator(object):
             return x
         if x.shape[-1] == 1:
             x = np.squeeze(x)
-        x = Image.fromarray(np.uint8(255 * x))
+        x = Image.fromarray(np.uint8(255 * (x + 0.5)))
         if rotate:
             x = x.rotate(90)
         if x.size[0] != size[0] or x.size[1] != size[1]:
             x = x.resize(size)
-        x = np.array(x) / 255.0
+        x = np.array(x) / 255.0 - 0.5
         if len(x.shape) < 3:
             x = np.expand_dims(x, -1)
         return x
@@ -90,7 +90,7 @@ class RandomDataGenerator(object):
     def _prepare_data(self, data, rotate):
         x_all, y_all = data
         assert len(x_all) == len(y_all)
-        x_all = x_all / 255.0
+        x_all = x_all / 255.0 - 0.5
         x_all = x_all.astype("float32")
 
         size = self.compute_one_input_shape()[:2]

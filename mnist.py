@@ -15,6 +15,7 @@ from mnist_evaluator import get_evaluator
 
 def save_image(x, path):
     x = np.squeeze(x)
+    x = np.minimum(np.maximum(x + 0.5, 0), 1)
     Image.fromarray(np.uint8(255 * x)).convert('RGB').save(path)
 
 
@@ -25,9 +26,9 @@ def main(args):
 
     # get data
     dg = get_data_generator(args)
-    randomize = args.test_distribution == 'random'
     eval_data = dg.get_eval_samples(args.test_sample_size)
-    test_data = dg.get_test_samples(args.test_sample_size, randomize=randomize)
+    test_data = dg.get_test_samples(args.test_sample_size, randomize=False)
+    random_data = dg.get_test_samples(args.test_sample_size, randomize=True)
 
     if args.save_image:
         for i in range(5):
@@ -35,13 +36,16 @@ def main(args):
                        os.path.join(args.log_dir, 'eval_' + str(i) + '.png'))
             save_image(test_data[0][i],
                        os.path.join(args.log_dir, 'test_' + str(i) + '.png'))
+            save_image(random_data[0][i],
+                       os.path.join(args.log_dir, 'random_' + str(i) + '.png'))
 
     # get model and evaluator
     output_nodes = dg.get_output_nodes()
     mg = get_model_generator(args, dg.get_input_shape(), output_nodes)
     model = mg.get_model()
     test_label_pairs = dg.get_test_label_pairs()
-    ev = get_evaluator(args, model, [eval_data, test_data], test_label_pairs)
+    ev = get_evaluator(args, model, [eval_data, test_data, random_data],
+                       test_label_pairs)
 
     # train and evaluate
     print(0, *ev.evaluate_all())
@@ -81,8 +85,6 @@ if __name__ == '__main__':
                         help='Learning rate.')
     parser.add_argument('--merge_type', type=str, default='paired',
                         help='Merge type.')
-    parser.add_argument('--test_distribution', type=str, default='original',
-                        help='Test distribution.')
     parser.add_argument('--save_image', action='store_true', default=False,
                         help='Show image and stop.')
     parser.add_argument('--adversarial', action='store_true',

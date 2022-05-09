@@ -18,7 +18,7 @@ python3 -u mnist.py \
 --parameter_random_seed ${RANDOM_SEED} \
 --merge_type added \
 --model_type cnn \
---log_interval 100 \
+--log_interval 200 \
 --batch_size 512 \
 --lr 0.001 \
 --steps 5000 \

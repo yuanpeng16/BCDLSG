@@ -87,11 +87,10 @@ class Evaluator(object):
 
     def evaluate_all(self):
         ret = []
-        ret.extend(
-            self.evaluate(self.datasets[0][0], self.datasets[0][1]))
-        ret.append("\t")
-        ret.extend(
-            self.test_evaluate(self.datasets[1][0], self.datasets[1][1]))
+        for dataset in self.datasets:
+            ret.extend(
+                self.evaluate(dataset[0], dataset[1]))
+            ret.append("\t")
         return ret
 
 

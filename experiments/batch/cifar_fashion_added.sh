@@ -2,13 +2,6 @@ ID=$(basename "$0" | sed "s/.sh$//g")
 ABS_PATH=$(readlink -f $0)
 cd $(dirname $(dirname $(dirname ${ABS_PATH})))
 
-sh experiments/cifar_cifar_added/cifar_cifar_added_0_6.sh 1
-sh experiments/cifar_cifar_added/cifar_cifar_added_1_5.sh 1
-sh experiments/cifar_cifar_added/cifar_cifar_added_2_4.sh 1
-sh experiments/cifar_cifar_added/cifar_cifar_added_3_3.sh 1
-sh experiments/cifar_cifar_added/cifar_cifar_added_4_2.sh 1
-sh experiments/cifar_cifar_added/cifar_cifar_added_5_1.sh 1
-sh experiments/cifar_cifar_added/cifar_cifar_added_6_0.sh 1
 sh experiments/cifar_fashion_added/cifar_fashion_added_0_6.sh 1
 sh experiments/cifar_fashion_added/cifar_fashion_added_1_5.sh 1
 sh experiments/cifar_fashion_added/cifar_fashion_added_2_4.sh 1
@@ -16,13 +9,6 @@ sh experiments/cifar_fashion_added/cifar_fashion_added_3_3.sh 1
 sh experiments/cifar_fashion_added/cifar_fashion_added_4_2.sh 1
 sh experiments/cifar_fashion_added/cifar_fashion_added_5_1.sh 1
 sh experiments/cifar_fashion_added/cifar_fashion_added_6_0.sh 1
-sh experiments/cifar_cifar_added/cifar_cifar_added_0_6.sh 2
-sh experiments/cifar_cifar_added/cifar_cifar_added_1_5.sh 2
-sh experiments/cifar_cifar_added/cifar_cifar_added_2_4.sh 2
-sh experiments/cifar_cifar_added/cifar_cifar_added_3_3.sh 2
-sh experiments/cifar_cifar_added/cifar_cifar_added_4_2.sh 2
-sh experiments/cifar_cifar_added/cifar_cifar_added_5_1.sh 2
-sh experiments/cifar_cifar_added/cifar_cifar_added_6_0.sh 2
 sh experiments/cifar_fashion_added/cifar_fashion_added_0_6.sh 2
 sh experiments/cifar_fashion_added/cifar_fashion_added_1_5.sh 2
 sh experiments/cifar_fashion_added/cifar_fashion_added_2_4.sh 2
@@ -30,13 +16,6 @@ sh experiments/cifar_fashion_added/cifar_fashion_added_3_3.sh 2
 sh experiments/cifar_fashion_added/cifar_fashion_added_4_2.sh 2
 sh experiments/cifar_fashion_added/cifar_fashion_added_5_1.sh 2
 sh experiments/cifar_fashion_added/cifar_fashion_added_6_0.sh 2
-sh experiments/cifar_cifar_added/cifar_cifar_added_0_6.sh 3
-sh experiments/cifar_cifar_added/cifar_cifar_added_1_5.sh 3
-sh experiments/cifar_cifar_added/cifar_cifar_added_2_4.sh 3
-sh experiments/cifar_cifar_added/cifar_cifar_added_3_3.sh 3
-sh experiments/cifar_cifar_added/cifar_cifar_added_4_2.sh 3
-sh experiments/cifar_cifar_added/cifar_cifar_added_5_1.sh 3
-sh experiments/cifar_cifar_added/cifar_cifar_added_6_0.sh 3
 sh experiments/cifar_fashion_added/cifar_fashion_added_0_6.sh 3
 sh experiments/cifar_fashion_added/cifar_fashion_added_1_5.sh 3
 sh experiments/cifar_fashion_added/cifar_fashion_added_2_4.sh 3
@@ -44,13 +23,6 @@ sh experiments/cifar_fashion_added/cifar_fashion_added_3_3.sh 3
 sh experiments/cifar_fashion_added/cifar_fashion_added_4_2.sh 3
 sh experiments/cifar_fashion_added/cifar_fashion_added_5_1.sh 3
 sh experiments/cifar_fashion_added/cifar_fashion_added_6_0.sh 3
-sh experiments/cifar_cifar_added/cifar_cifar_added_0_6.sh 4
-sh experiments/cifar_cifar_added/cifar_cifar_added_1_5.sh 4
-sh experiments/cifar_cifar_added/cifar_cifar_added_2_4.sh 4
-sh experiments/cifar_cifar_added/cifar_cifar_added_3_3.sh 4
-sh experiments/cifar_cifar_added/cifar_cifar_added_4_2.sh 4
-sh experiments/cifar_cifar_added/cifar_cifar_added_5_1.sh 4
-sh experiments/cifar_cifar_added/cifar_cifar_added_6_0.sh 4
 sh experiments/cifar_fashion_added/cifar_fashion_added_0_6.sh 4
 sh experiments/cifar_fashion_added/cifar_fashion_added_1_5.sh 4
 sh experiments/cifar_fashion_added/cifar_fashion_added_2_4.sh 4
@@ -58,13 +30,6 @@ sh experiments/cifar_fashion_added/cifar_fashion_added_3_3.sh 4
 sh experiments/cifar_fashion_added/cifar_fashion_added_4_2.sh 4
 sh experiments/cifar_fashion_added/cifar_fashion_added_5_1.sh 4
 sh experiments/cifar_fashion_added/cifar_fashion_added_6_0.sh 4
-sh experiments/cifar_cifar_added/cifar_cifar_added_0_6.sh 5
-sh experiments/cifar_cifar_added/cifar_cifar_added_1_5.sh 5
-sh experiments/cifar_cifar_added/cifar_cifar_added_2_4.sh 5
-sh experiments/cifar_cifar_added/cifar_cifar_added_3_3.sh 5
-sh experiments/cifar_cifar_added/cifar_cifar_added_4_2.sh 5
-sh experiments/cifar_cifar_added/cifar_cifar_added_5_1.sh 5
-sh experiments/cifar_cifar_added/cifar_cifar_added_6_0.sh 5
 sh experiments/cifar_fashion_added/cifar_fashion_added_0_6.sh 5
 sh experiments/cifar_fashion_added/cifar_fashion_added_1_5.sh 5
 sh experiments/cifar_fashion_added/cifar_fashion_added_2_4.sh 5
