@@ -94,10 +94,11 @@ class CNNModelGenerator(DeepModelGenerator):
         x1, x2 = self.get_core_structure(self.args.n_hidden_nodes,
                                          n_common_layers,
                                          n_separate_layers, x)
-        x1 = self.post_layers(hn, x1)
         if self.args.n_separate_layers == 0:
+            x1 = self.post_layers(2 * hn, x1)
             x2 = x1
         else:
+            x1 = self.post_layers(hn, x1)
             x2 = self.post_layers(hn, x2)
         return x1, x2
 
