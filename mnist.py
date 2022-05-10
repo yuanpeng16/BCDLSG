@@ -29,6 +29,11 @@ def main(args):
     eval_data = dg.get_eval_samples(args.test_sample_size)
     test_data = dg.get_test_samples(args.test_sample_size, randomize=False)
     random_data = dg.get_test_samples(args.test_sample_size, randomize=True)
+    large_eval_data = dg.get_eval_samples(10 * args.test_sample_size)
+    large_test_data = dg.get_test_samples(10 * args.test_sample_size,
+                                          randomize=False)
+    large_random_data = dg.get_test_samples(10 * args.test_sample_size,
+                                            randomize=True)
 
     if args.save_image:
         for i in range(5):
@@ -45,6 +50,7 @@ def main(args):
     model = mg.get_model()
     test_label_pairs = dg.get_test_label_pairs()
     ev = get_evaluator(args, model, [eval_data, test_data, random_data],
+                       [large_eval_data, large_test_data, large_random_data],
                        test_label_pairs)
 
     # train and evaluate
@@ -55,6 +61,7 @@ def main(args):
                   verbose=0)
         if i % args.log_interval == args.log_interval - 1:
             print(i + 1, *ev.evaluate_all())
+    print("final", *ev.large_evaluate_all())
 
 
 if __name__ == '__main__':

@@ -4,24 +4,26 @@ import numpy as np
 from mnist_data import one_hot
 
 
-def get_evaluator(args, model, datasets, test_label_pairs):
+def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
     if args.adversarial:
         if args.any_generalization:
             ev = RandomAdversarialEvaluator(
-                args, model, datasets, test_label_pairs)
+                args, model, datasets, large_datasets, test_label_pairs)
         else:
             ev = AdversarialEvaluator(
-                args, model, datasets, test_label_pairs)
+                args, model, datasets, large_datasets, test_label_pairs)
     else:
-        ev = Evaluator(args, model, datasets, test_label_pairs)
+        ev = Evaluator(args, model, datasets, large_datasets, test_label_pairs)
     return ev
 
 
 class Evaluator(object):
-    def __init__(self, args, model, datasets, test_label_pairs):
+    def __init__(self, args, model, datasets, large_datasets,
+                 test_label_pairs):
         self.args = args
         self.model = model
         self.datasets = datasets
+        self.large_datasets = large_datasets
         self.test_label_pairs = set(test_label_pairs)
 
     def forward(self, x):
@@ -85,18 +87,26 @@ class Evaluator(object):
     def test_evaluate(self, x, y):
         return self.evaluate(x, y)
 
-    def evaluate_all(self):
+    def evaluate_datasets(self, datasets):
         ret = []
-        for dataset in self.datasets:
+        for dataset in datasets:
             ret.extend(
                 self.evaluate(dataset[0], dataset[1]))
             ret.append("\t")
         return ret
 
+    def evaluate_all(self):
+        return self.evaluate_datasets(self.datasets)
+
+    def large_evaluate_all(self):
+        return self.evaluate_datasets(self.large_datasets)
+
 
 class AdversarialEvaluator(Evaluator):
-    def __init__(self, args, model, datasets, test_label_pairs):
-        super().__init__(args, model, datasets, test_label_pairs)
+    def __init__(self, args, model, datasets, large_datasets,
+                 test_label_pairs):
+        super().__init__(args, model, datasets, large_datasets,
+                         test_label_pairs)
         self.initialize()
 
     def initialize(self):
