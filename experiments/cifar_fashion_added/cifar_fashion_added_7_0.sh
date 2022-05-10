@@ -1,8 +1,14 @@
 #!/usr/bin/env bash
-if [ $# = 1 ]; then
+if [ $# -gt 0 ]; then
   RANDOM_SEED=$1
 else
   RANDOM_SEED=1
+fi
+
+if [ $# -gt 1 ]; then
+  GPU_ID=$2
+else
+  GPU_ID=0
 fi
 
 ID=$(basename "$0" | sed "s/.sh$//g")
@@ -13,7 +19,7 @@ MYDIR=logs/${ID}_${RANDOM_SEED}
 mkdir -p ${MYDIR}
 cp ${ABS_PATH} ${MYDIR}
 
-CUDA_VISIBLE_DEVICES=0 \
+CUDA_VISIBLE_DEVICES=${GPU_ID} \
 python3 -u mnist.py \
 --parameter_random_seed ${RANDOM_SEED} \
 --merge_type added \
