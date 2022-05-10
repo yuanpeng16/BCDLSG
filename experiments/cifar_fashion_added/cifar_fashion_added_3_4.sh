@@ -34,6 +34,5 @@ python3 -u mnist.py \
 --dataset1 cifar10 \
 --dataset2 fashion_mnist \
 --label_split tile \
---rotate_second_input \
 --log_dir ${MYDIR} \
 | tee ${MYDIR}/log.txt
