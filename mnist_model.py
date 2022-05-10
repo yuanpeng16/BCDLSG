@@ -28,20 +28,22 @@ class DeepModelGenerator(object):
     def get_one_layer(self, hn, x):
         return tf.keras.layers.Dense(hn, activation='relu')(x)
 
-    def get_core_structure(self, hn, x):
-        for _ in range(self.args.n_common_layers):
+    def get_core_structure(self, hn, n_common_layers, n_separate_layers, x):
+        for _ in range(n_common_layers):
             x = self.get_one_layer(hn, x)
         x1, x2 = x, x
         h1 = int(hn / 2)
         h2 = hn - h1
-        for _ in range(self.args.n_separate_layers):
+        for _ in range(n_separate_layers):
             x1 = self.get_one_layer(h1, x1)
             x2 = self.get_one_layer(h2, x2)
         return x1, x2
 
     def get_main_model(self, x):
         x = tf.keras.layers.Flatten()(x)
-        x1, x2 = self.get_core_structure(self.args.n_hidden_nodes, x)
+        x1, x2 = self.get_core_structure(self.args.n_hidden_nodes,
+                                         self.args.n_common_layers,
+                                         self.args.n_separate_layers, x)
         return x1, x2
 
     def get_structure(self):
@@ -82,9 +84,21 @@ class CNNModelGenerator(DeepModelGenerator):
 
     def get_main_model(self, x):
         hn = self.args.n_hidden_nodes
-        x1, x2 = self.get_core_structure(self.args.n_hidden_nodes, x)
+        if self.args.n_separate_layers == 0:
+            n_common_layers = self.args.n_common_layers - 1
+            n_separate_layers = self.args.n_separate_layers
+        else:
+            n_common_layers = self.args.n_common_layers
+            n_separate_layers = self.args.n_separate_layers - 1
+
+        x1, x2 = self.get_core_structure(self.args.n_hidden_nodes,
+                                         n_common_layers,
+                                         n_separate_layers, x)
         x1 = self.post_layers(hn, x1)
-        x2 = self.post_layers(hn, x2)
+        if self.args.n_separate_layers == 0:
+            x2 = x1
+        else:
+            x2 = self.post_layers(hn, x2)
         return x1, x2
 
 

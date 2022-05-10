@@ -24,7 +24,7 @@ python3 -u mnist.py \
 --steps 5000 \
 --n_hidden_nodes 64 \
 --n_common_layers 2 \
---n_separate_layers 4 \
+--n_separate_layers 5 \
 --dataset1 cifar10 \
 --dataset2 fashion_mnist \
 --label_split tile \
