@@ -120,6 +120,8 @@ class RandomDataGenerator(object):
             return x != y
         elif self.args.label_split == 'one_label':
             return x < 9 or y < 1
+        elif self.args.label_split == 'many_label':
+            return x < 5 or y < 1
         assert False
 
     def get_label_splits(self):
