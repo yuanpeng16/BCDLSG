@@ -25,7 +25,7 @@ python3 -u mnist.py \
 --merge_type added \
 --model_type resnet \
 --log_interval 200 \
---batch_size 512 \
+--batch_size 1024 \
 --lr 0.001 \
 --steps 5000 \
 --n_hidden_nodes 64 \
