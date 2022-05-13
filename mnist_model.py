@@ -128,11 +128,11 @@ class ResidualCNNModelGenerator(CNNModelGenerator):
 
 class SeparatedResNet(DeepModelGenerator):
     def get_core_structure(self, x, stage, num_classes, ff_activation):
-        x = get_resnet_model(x, 'A', 1, True, stage)
+        x = get_resnet_model(x, 'A', 1, True, stage, use_l2_regularizer=False)
         x1 = get_resnet_model(x, 'B', 2, False, stage, num_classes,
-                              ff_activation)
+                              ff_activation, use_l2_regularizer=False)
         x2 = get_resnet_model(x, 'C', 2, False, stage, num_classes,
-                              ff_activation)
+                              ff_activation, use_l2_regularizer=False)
         return x1, x2
 
     def get_structure(self):
