@@ -28,7 +28,7 @@ python3 -u mnist.py \
 --batch_size 512 \
 --lr 0.001 \
 --steps 2000 \
---n_hidden_nodes 1024 \
+--n_hidden_nodes 512 \
 --n_common_layers 6 \
 --n_separate_layers 1 \
 --dataset1 fashion_mnist \

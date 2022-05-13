@@ -4,6 +4,8 @@ from tensorflow.keras.layers import Input
 from tensorflow.keras.layers import Dense
 import numpy as np
 
+from resnet import get_resnet_model
+
 
 def get_model_generator(args, input_shape, output_nodes):
     if args.model_type == 'dnn':
@@ -14,6 +16,8 @@ def get_model_generator(args, input_shape, output_nodes):
         model = ResidualModelGenerator(args, input_shape, output_nodes)
     elif args.model_type == 'residual_cnn':
         model = ResidualCNNModelGenerator(args, input_shape, output_nodes)
+    elif args.model_type == 'resnet':
+        model = SeparatedResNet(args, input_shape, output_nodes)
     else:
         assert False
     return model
@@ -120,3 +124,26 @@ class ResidualCNNModelGenerator(CNNModelGenerator):
     def get_one_layer(self, hn, x):
         layer = super().get_one_layer(hn, x)
         return residual(x, layer)
+
+
+class SeparatedResNet(DeepModelGenerator):
+    def get_core_structure(self, x, stage, num_classes, ff_activation):
+        x = get_resnet_model(x, 'A', 1, True, stage)
+        x1 = get_resnet_model(x, 'B', 2, False, stage, num_classes,
+                              ff_activation)
+        x2 = get_resnet_model(x, 'C', 2, False, stage, num_classes,
+                              ff_activation)
+        return x1, x2
+
+    def get_structure(self):
+        assert self.args.n_common_layers + self.args.n_separate_layers == 5
+        inputs = Input(shape=self.input_shape)
+        if self.args.loss_type == 'hinge':
+            ff_activation = 'linear'
+        else:
+            ff_activation = 'softmax'
+        x1, x2 = self.get_core_structure(inputs, self.args.n_common_layers,
+                                         self.output_nodes, ff_activation)
+        outputs = [x1, x2]
+        model = Model(inputs=inputs, outputs=outputs)
+        return model

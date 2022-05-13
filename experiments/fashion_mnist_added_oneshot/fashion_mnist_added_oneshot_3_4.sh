@@ -33,6 +33,6 @@ python3 -u mnist.py \
 --n_separate_layers 4 \
 --dataset1 fashion_mnist \
 --dataset2 mnist \
---label_split diagonal \
+--label_split one_label \
 --log_dir ${MYDIR} \
 | tee ${MYDIR}/log.txt
