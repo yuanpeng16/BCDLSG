@@ -47,6 +47,7 @@ def main(args):
     # get model and evaluator
     output_nodes = dg.get_output_nodes()
     mg = get_model_generator(args, dg.get_input_shape(), output_nodes)
+    mg.set_vocab_size(dg.get_vocab_size())
     model = mg.get_model()
     test_label_pairs = dg.get_test_label_pairs()
     ev = get_evaluator(args, model, [eval_data, test_data, random_data],

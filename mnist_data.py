@@ -15,6 +15,8 @@ def get_data_generator(args):
         dg = AddedDataGenerator(args)
     elif args.merge_type == 'max':
         dg = MaxDataGenerator(args)
+    elif args.merge_type == 'text':
+        dg = TextDataGenerator(args)
     else:
         assert False
     return dg
@@ -182,6 +184,9 @@ class RandomDataGenerator(object):
     def compute_one_input_shape(self):
         return tuple(np.maximum(self.shape1, self.shape2))
 
+    def get_vocab_size(self):
+        return 0
+
     def _merge(self, y, y2, samples1, samples2):
         pass
 
@@ -256,3 +261,77 @@ class AddedDataGenerator(RandomDataGenerator):
 class MaxDataGenerator(AddedDataGenerator):
     def overlap(self, x1, x2):
         return np.maximum(x1, x2)
+
+
+class TextDataGenerator(RandomDataGenerator):
+    def __init__(self, args):
+        self.args = args
+        self.output_nodes = 2
+
+        maxlen = 200
+        self.max_length = 2 * maxlen + 1
+        train1, test1, self.shape1 = self._get_data(args.dataset1, maxlen)
+        train2, test2, self.shape2 = self._get_data(args.dataset2, maxlen)
+        self.input_shape = self.compute_input_shape()
+
+        inputs = [train1[0], test1[0], train2[0], test2[0]]
+        self.vocab_size = max(max([max(x) for x in xs]) for xs in inputs)
+
+        # Preprocessing
+        self.train_samples1 = self._prepare_data(train1)
+        self.test_samples1 = self._prepare_data(test1)
+        self.train_samples2 = self._prepare_data(train2)
+        self.test_samples2 = self._prepare_data(test2)
+
+        self.train_label_pairs = []
+        self.test_label_pairs = []
+        self.get_label_splits()
+
+    def _get_data(self, data_name, maxlen):
+        if data_name == 'imdb':
+            dataset = tf.keras.datasets.imdb
+        else:
+            assert False
+
+        (x_train, y_train), (x_test, y_test) = dataset.load_data(maxlen=maxlen)
+        shape = x_train.shape[1:]
+        train_samples = [x_train, y_train]
+        test_samples = [x_test, y_test]
+        return train_samples, test_samples, shape
+
+    def compute_input_shape(self):
+        return (self.max_length,)
+
+    def _prepare_data(self, data):
+        x_all, y_all = data
+        assert len(x_all) == len(y_all)
+        data = [[] for _ in range(self.output_nodes)]
+        for x, y in zip(x_all, y_all):
+            y = int(y)
+            data[y].append(x)
+        return data
+
+    def is_train_label(self, x, y):
+        if self.args.label_split == 'tile':
+            return x < 1 or y < 1
+        elif self.args.label_split == 'diagonal':
+            return x != y
+        assert False
+
+    def get_test_samples(self, k, randomize=False):
+        samples, y_list = self._get_samples(
+            self.test_samples1, self.test_samples2, k, is_train=False)
+        # if randomize:
+        #    samples = np.random.rand(*samples.shape)
+        return samples, y_list
+
+    def get_vocab_size(self):
+        # Dedicated method for text data.
+        return self.vocab_size
+
+    def _merge(self, y, y2, samples1, samples2):
+        x1 = random.choice(samples1[y])
+        x2 = random.choice(samples2[y2])
+        x = x1 + x2
+        padded_x = np.array(x + ([0] * (self.max_length - len(x))))
+        return padded_x

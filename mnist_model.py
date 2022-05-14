@@ -5,6 +5,7 @@ from tensorflow.keras.layers import Dense
 import numpy as np
 
 from resnet import get_resnet_model
+from separate_transformer import get_transformer_model
 
 
 def get_model_generator(args, input_shape, output_nodes):
@@ -18,6 +19,8 @@ def get_model_generator(args, input_shape, output_nodes):
         model = ResidualCNNModelGenerator(args, input_shape, output_nodes)
     elif args.model_type == 'resnet':
         model = SeparatedResNet(args, input_shape, output_nodes)
+    elif args.model_type == 'transformer':
+        model = SeparateTransformer(args, input_shape, output_nodes)
     else:
         assert False
     return model
@@ -50,8 +53,11 @@ class DeepModelGenerator(object):
                                          self.args.n_separate_layers, x)
         return x1, x2
 
+    def get_input_type(self):
+        return tf.float32
+
     def get_structure(self):
-        inputs = Input(shape=self.input_shape)
+        inputs = Input(shape=self.input_shape, dtype=self.get_input_type())
         x1, x2 = self.get_main_model(inputs)
 
         if self.args.loss_type == 'hinge':
@@ -74,6 +80,10 @@ class DeepModelGenerator(object):
             loss = 'categorical_crossentropy'
         model.compile(optimizer=adam, loss=loss, metrics=['accuracy'])
         return model
+
+    def set_vocab_size(self, vocab_size):
+        # Do nothing
+        pass
 
 
 class CNNModelGenerator(DeepModelGenerator):
@@ -147,3 +157,16 @@ class SeparatedResNet(DeepModelGenerator):
         outputs = [x1, x2]
         model = Model(inputs=inputs, outputs=outputs)
         return model
+
+
+class SeparateTransformer(DeepModelGenerator):
+    def set_vocab_size(self, vocab_size):
+        self.vocab_size = vocab_size
+
+    def get_input_type(self):
+        return tf.int32
+
+    def get_main_model(self, x):
+        return get_transformer_model(
+            x, self.args.n_hidden_nodes, self.args.n_common_layers,
+            self.args.n_separate_layers, self.vocab_size)
