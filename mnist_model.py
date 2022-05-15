@@ -21,6 +21,8 @@ def get_model_generator(args, input_shape, output_nodes):
         model = SeparatedResNet(args, input_shape, output_nodes)
     elif args.model_type == 'transformer':
         model = SeparateTransformer(args, input_shape, output_nodes)
+    elif args.model_type == 'lstm':
+        model = LSTMModelGenerator(args, input_shape, output_nodes)
     else:
         assert False
     return model
@@ -170,3 +172,41 @@ class SeparateTransformer(DeepModelGenerator):
         return get_transformer_model(
             x, self.args.n_hidden_nodes, self.args.n_common_layers,
             self.args.n_separate_layers, self.vocab_size)
+
+
+class LSTMModelGenerator(DeepModelGenerator):
+    def set_vocab_size(self, vocab_size):
+        self.vocab_size = vocab_size + 1
+
+    def get_input_type(self):
+        return tf.int32
+
+    def get_one_layer(self, hn, x, layer_id):
+        if layer_id == 0:
+            x = tf.keras.layers.Embedding(self.vocab_size, hn)(x)
+        else:
+            hidden_size = int(hn / 2)
+            x = tf.keras.layers.Bidirectional(
+                tf.keras.layers.LSTM(hidden_size, return_sequences=True))(x)
+        if layer_id == self.args.n_common_layers + self.args.n_separate_layers - 1:
+            x = tf.keras.layers.Flatten()(x)
+        return x
+
+    def get_core_structure(self, hn, n_common_layers, n_separate_layers, x):
+        for i in range(n_common_layers):
+            x = self.get_one_layer(hn, x, i)
+        x1, x2 = x, x
+        h1 = int(hn / 2)
+        h2 = hn - h1
+        for i in range(n_separate_layers):
+            layer_id = n_common_layers + i
+            x1 = self.get_one_layer(h1, x1, layer_id)
+            x2 = self.get_one_layer(h2, x2, layer_id)
+        return x1, x2
+
+    def get_main_model(self, x):
+        x1, x2 = self.get_core_structure(self.args.n_hidden_nodes,
+                                         self.args.n_common_layers,
+                                         self.args.n_separate_layers, x)
+        return x1, x2
+
