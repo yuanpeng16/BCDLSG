@@ -318,13 +318,6 @@ class TextDataGenerator(RandomDataGenerator):
             return x != y
         assert False
 
-    def get_test_samples(self, k, randomize=False):
-        samples, y_list = self._get_samples(
-            self.test_samples1, self.test_samples2, k, is_train=False)
-        # if randomize:
-        #    samples = np.random.rand(*samples.shape)
-        return samples, y_list
-
     def get_vocab_size(self):
         # Dedicated method for text data.
         return self.vocab_size
