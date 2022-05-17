@@ -275,7 +275,7 @@ class TextDataGenerator(RandomDataGenerator):
         self.input_shape = self.compute_input_shape()
 
         inputs = [train1[0], test1[0], train2[0], test2[0]]
-        self.vocab_size = max(max([max(x) for x in xs]) for xs in inputs)
+        self.vocab_size = max(max([max(x) for x in xs]) for xs in inputs) + 1
 
         # Preprocessing
         self.train_samples1 = self._prepare_data(train1)
@@ -335,3 +335,11 @@ class TextDataGenerator(RandomDataGenerator):
         x = x1 + x2
         padded_x = np.array(x + ([0] * (self.max_length - len(x))))
         return padded_x
+
+    def get_test_samples(self, k, randomize=False):
+        samples, y_list = self._get_samples(
+            self.test_samples1, self.test_samples2, k, is_train=False)
+        if randomize:
+            shape = samples.shape
+            samples = np.random.randint(0, high=self.vocab_size, size=shape)
+        return samples, y_list

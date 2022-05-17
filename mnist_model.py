@@ -163,7 +163,7 @@ class SeparatedResNet(DeepModelGenerator):
 
 class SeparateTransformer(DeepModelGenerator):
     def set_vocab_size(self, vocab_size):
-        self.vocab_size = vocab_size + 1
+        self.vocab_size = vocab_size
 
     def get_input_type(self):
         return tf.int32
@@ -176,7 +176,7 @@ class SeparateTransformer(DeepModelGenerator):
 
 class LSTMModelGenerator(DeepModelGenerator):
     def set_vocab_size(self, vocab_size):
-        self.vocab_size = vocab_size + 1
+        self.vocab_size = vocab_size
 
     def get_input_type(self):
         return tf.int32

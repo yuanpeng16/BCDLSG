@@ -3,6 +3,6 @@ __pycache__
 .pyc
 SCAN
 playground
-logs
+logs*
 outputs
 experiments/sanity_check
