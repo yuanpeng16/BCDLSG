@@ -334,5 +334,9 @@ class TextDataGenerator(RandomDataGenerator):
             self.test_samples1, self.test_samples2, k, is_train=False)
         if randomize:
             shape = samples.shape
-            samples = np.random.randint(0, high=self.vocab_size, size=shape)
+            for i in range(shape[0]):
+                for j in range(shape[1]):
+                    if samples[i][j] > 1:
+                        samples[i][j] = np.random.randint(
+                            2, high=self.vocab_size)
         return samples, y_list
