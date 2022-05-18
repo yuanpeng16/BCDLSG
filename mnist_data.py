@@ -178,7 +178,7 @@ class RandomDataGenerator(object):
         samples, y_list = self._get_samples(
             self.test_samples1, self.test_samples2, k, is_train=False)
         if randomize:
-            samples = np.random.rand(*samples.shape)
+            samples = np.random.rand(*samples.shape) - 0.5
         return samples, y_list
 
     def compute_one_input_shape(self):
