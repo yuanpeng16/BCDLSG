@@ -54,6 +54,7 @@ class RandomDataGenerator(object):
         self.train_label_pairs = []
         self.test_label_pairs = []
         self.get_label_splits()
+        self.all_train_pairs = self.train_label_pairs + self.test_label_pairs
 
     def _get_data(self, data_name):
         if data_name == 'mnist':
@@ -148,10 +149,13 @@ class RandomDataGenerator(object):
         y = np.reshape(y_flat, shape)
         return y
 
-    def _get_samples(self, samples1, samples2, k, is_train):
+    def _get_samples(self, samples1, samples2, k, is_train, pretrain=False):
         x_list, y_list, y2_list = [], [], []
         if is_train:
-            label_list = random.choices(self.train_label_pairs, k=k)
+            if pretrain:
+                label_list = random.choices(self.all_train_pairs, k=k)
+            else:
+                label_list = random.choices(self.train_label_pairs, k=k)
         else:
             label_list = random.choices(self.test_label_pairs, k=k)
 
@@ -167,9 +171,9 @@ class RandomDataGenerator(object):
         y2_list = np.asarray(y2_list)
         return x_list, [y_list, y2_list]
 
-    def get_training_samples(self, k):
+    def get_training_samples(self, k, pretrain=False):
         return self._get_samples(self.train_samples1, self.train_samples2, k,
-                                 is_train=True)
+                                 is_train=True, pretrain=pretrain)
 
     def get_eval_samples(self, k):
         return self.get_training_samples(k)

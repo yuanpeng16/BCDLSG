@@ -19,6 +19,16 @@ def save_image(x, path):
     Image.fromarray(np.uint8(255 * x)).convert('RGB').save(path)
 
 
+def train(args, dg, model, ev, pretrain=False):
+    for i in range(args.steps):
+        x_train, y_train = dg.get_training_samples(args.batch_size,
+                                                   pretrain=pretrain)
+        model.fit(x_train, y_train, batch_size=args.batch_size, epochs=1,
+                  verbose=0)
+        if i % args.log_interval == args.log_interval - 1:
+            print(i + 1, *ev.evaluate_all())
+
+
 def main(args):
     # set random seeds
     random.seed(args.data_random_seed)
@@ -56,12 +66,10 @@ def main(args):
 
     # train and evaluate
     print(0, *ev.evaluate_all())
-    for i in range(args.steps):
-        x_train, y_train = dg.get_training_samples(args.batch_size)
-        model.fit(x_train, y_train, batch_size=args.batch_size, epochs=1,
-                  verbose=0)
-        if i % args.log_interval == args.log_interval - 1:
-            print(i + 1, *ev.evaluate_all())
+    if args.pretrain:
+        train(args, dg, model, ev, pretrain=True)
+        print("pretrain", *ev.large_evaluate_all())
+    train(args, dg, model, ev)
     print("final", *ev.large_evaluate_all())
 
 
@@ -111,5 +119,7 @@ if __name__ == '__main__':
     parser.add_argument('--label_split', type=str, default='tile',
                         help='Model type.')
     parser.add_argument('--rotate_second_input', action='store_true',
+                        default=False, help='Rotate second input.')
+    parser.add_argument('--pretrain', action='store_true',
                         default=False, help='Rotate second input.')
     main(parser.parse_args())
