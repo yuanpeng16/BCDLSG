@@ -8,9 +8,9 @@ import random
 import os
 from PIL import Image
 
-from mnist_data import get_data_generator
-from mnist_model import get_model_generator
-from mnist_evaluator import get_evaluator
+from data import get_data_generator
+from model import get_model_generator
+from evaluator import get_evaluator
 
 
 def save_image(x, path):

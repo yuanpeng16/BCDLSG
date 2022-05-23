@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np
 
-from mnist_data import one_hot
+from data import one_hot
 
 
 def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
