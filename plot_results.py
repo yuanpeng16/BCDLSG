@@ -8,15 +8,6 @@ from matplotlib import rc
 def draw(args, lists, stds, legends, basedir, colors, lw, loc, v_name,
          plot=True):
     x_lim = len(lists[0])
-    if x_lim >= 1000:
-        marker_scale = 10
-        start_scale = marker_scale
-    elif args.experiment_type == 'scan':
-        marker_scale = 1
-        start_scale = 2
-    else:
-        marker_scale = 1
-        start_scale = marker_scale
     directory = os.path.dirname(basedir)
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -48,7 +39,7 @@ def draw(args, lists, stds, legends, basedir, colors, lw, loc, v_name,
             ls = '-'
         else:
             ls = '--'
-        ax.plot(l1, lw=lw, markevery=(start_scale, marker_scale),
+        ax.plot(l1, lw=lw, markevery=(0, 1),
                 ls=ls,
                 marker=marker, markersize=16, markeredgewidth=2,
                 markerfacecolor='none', color=color, label=legend)
