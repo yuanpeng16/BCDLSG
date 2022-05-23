@@ -32,6 +32,8 @@ class Evaluator(object):
         for i in range(0, len(x), size):
             j = min(i + size, len(x))
             y1, y2 = self.model(x[i:j])
+            y1 = tf.argmax(y1, -1).numpy()
+            y2 = tf.argmax(y2, -1).numpy()
             y1_hat.extend(y1)
             y2_hat.extend(y2)
         return y1_hat, y2_hat
@@ -39,8 +41,8 @@ class Evaluator(object):
     def evaluate(self, x, y):
         y_hat = self.forward(x)
         n_samples = len(y[0])
-        y1_hat_list = np.argmax(y_hat[0], -1)
-        y2_hat_list = np.argmax(y_hat[1], -1)
+        y1_hat_list = y_hat[0]
+        y2_hat_list = y_hat[1]
         hit1, hit2, hit, sg_hit = 0, 0, 0, 0
         for i in range(n_samples):
             y1_hat = y1_hat_list[i]
