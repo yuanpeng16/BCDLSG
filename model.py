@@ -23,6 +23,8 @@ def get_model_generator(args, input_shape, output_nodes):
         model = SeparateTransformer(args, input_shape, output_nodes)
     elif args.model_type == 'lstm':
         model = LSTMModelGenerator(args, input_shape, output_nodes)
+    elif args.model_type == 'gnn':
+        model = GNNModelGenerator(args, input_shape, output_nodes)
     else:
         assert False
     return model
@@ -119,6 +121,23 @@ class CNNModelGenerator(DeepModelGenerator):
         return x1, x2
 
 
+class GNNModelGenerator(CNNModelGenerator):
+    def get_one_layer(self, hn, x):
+        h = tf.keras.layers.Conv2D(hn, (3, 1), (1, 1), activation=None,
+                                   padding='SAME')(x)
+        v = tf.keras.layers.Conv2D(hn, (1, 3), (1, 1), activation=None,
+                                   padding='SAME')(x)
+        x = h + v
+        x = tf.keras.layers.Activation('relu')(x)
+        return x
+
+    def get_one_layer1(self, hn, x):
+        x = tf.keras.layers.AveragePooling2D((3, 3), (1, 1), padding='SAME')(x)
+        x = tf.keras.layers.Conv2D(hn, (1, 1), activation='relu',
+                                   padding='SAME')(x)
+        return x
+
+
 def residual(x, layer):
     comparison = np.array(x.shape) == np.array(layer.shape)
     if comparison.all():
@@ -209,4 +228,3 @@ class LSTMModelGenerator(DeepModelGenerator):
                                          self.args.n_common_layers,
                                          self.args.n_separate_layers, x)
         return x1, x2
-
