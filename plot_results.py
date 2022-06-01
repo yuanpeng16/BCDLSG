@@ -113,7 +113,7 @@ def get_params(args):
             ('OOD Area', ('r', 's')),
             ('ALL Area', ('brown', 'D')),
         ]
-        eid = 'fashion_mnist_added_diagonal_'
+        eid = args.experiment_id + '_'
         ids = ['0_7', '1_6', '2_5', '3_4', '4_3', '5_2', '6_1', '7_0']
         file_list = ['logs/' + eid + c + '_' for c in ids]
         legends = [x[0] for x in pairs]
@@ -166,6 +166,9 @@ def main(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--experiment_type', type=str, default='mnist',
+                        help='Experiment type.')
+    parser.add_argument('--experiment_id', type=str,
+                        default='fashion_mnist_added_diagonal',
                         help='Experiment type.')
     parser.add_argument('--analysis', action='store_true', default=False,
                         help='Analysis.')
