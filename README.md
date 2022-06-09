@@ -4,4 +4,7 @@
     sh experiments/batch/fashion_mnist_added_diagonal.sh
 
 ## Plot results
+    # DNN and others
     python3 plot_results.py --experiment_id fashion_mnist_added_diagonal
+    # ResNet
+    python3 plot_results.py --experiment_id cifar_fashion_added_diagonal_resnet --depth 5

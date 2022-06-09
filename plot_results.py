@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 
 
-def draw(args, lists, stds, legends, basedir, colors, lw, loc, v_name,
+def draw(args, lists, stds, legends, basedir, colors, lw, loc, labels, v_name,
          plot=True):
     x_lim = len(lists[0])
     directory = os.path.dirname(basedir)
@@ -52,8 +52,7 @@ def draw(args, lists, stds, legends, basedir, colors, lw, loc, v_name,
     ax.legend(loc=loc, prop={'size': legend_font_size})
     ax.set_xlabel('Common-Individual Layer Depth', fontsize=font_size)
     ax.set_ylabel(v_name, fontsize=font_size)
-    ax.set_xticklabels(
-        ['0-7', '1-6', '2-5', '3-4', '4-3', '5-2', '6-1', '7-0'])
+    ax.set_xticklabels(labels)
     ax.xaxis.labelpad = 5
     ax.yaxis.labelpad = 5
     plt.savefig(basedir + '.pdf', bbox_inches='tight', pad_inches=0.01)
@@ -106,15 +105,18 @@ def get_results(args, path):
 
 
 def get_params(args):
-    if args.experiment_type == 'mnist':
+    if args.experiment_type == 'main':
         pairs = [
             ('IID Acc', ('b', 'v')),
             ('OOD Acc', ('c', '^')),
             ('OOD Area', ('r', 's')),
             ('ALL Area', ('brown', 'D')),
         ]
+        ids = [
+            str(i) + '_' + str(args.depth - i) for i in range(args.depth + 1)]
+        labels = [
+            str(i) + '-' + str(args.depth - i) for i in range(args.depth + 1)]
         eid = args.experiment_id + '_'
-        ids = ['0_7', '1_6', '2_5', '3_4', '4_3', '5_2', '6_1', '7_0']
         file_list = ['logs/' + eid + c + '_' for c in ids]
         legends = [x[0] for x in pairs]
         colors = [x[1] for x in pairs]
@@ -127,11 +129,11 @@ def get_params(args):
     else:
         print(args.experiment_type + " is not defined.")
         assert False
-    return file_list, legends, output_list, colors, lw, loc
+    return file_list, legends, output_list, colors, lw, loc, labels
 
 
 def main(args):
-    file_list, legends, output_list, colors, lw, loc = get_params(args)
+    file_list, legends, output_list, colors, lw, loc, labels = get_params(args)
     eval1_list = []
     eval2_list = []
     eval3_list = []
@@ -160,16 +162,18 @@ def main(args):
     acc_mean = [eval2_list, eval3_list, eval4_list]
     acc_std = [std2_list, std3_list, std4_list]
     draw(args, acc_mean, acc_std, legends, output_list[0], colors, lw, loc,
-         'Accuracy (%)')
+         labels, 'Accuracy (%)')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--experiment_type', type=str, default='mnist',
+    parser.add_argument('--experiment_type', type=str, default='main',
                         help='Experiment type.')
     parser.add_argument('--experiment_id', type=str,
                         default='fashion_mnist_added_diagonal',
                         help='Experiment type.')
+    parser.add_argument('--depth', type=int, default=7,
+                        help='Depth of the network.')
     parser.add_argument('--analysis', action='store_true', default=False,
                         help='Analysis.')
     parser.add_argument('--first_experiment', action='store_true',
