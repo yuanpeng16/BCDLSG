@@ -67,7 +67,7 @@ def get_list_index(lines):
         if x[0] == 'final':
             ret.append(-1)
         else:
-            ret.append(int(x[0]))
+            ret.append(x[0])
     return ret
 
 
@@ -138,10 +138,8 @@ def get_params(args):
         loc = 'right'
     elif args.experiment_type == 'steps':
         pairs = [
-            ('IID Acc', ('b', 'v')),
-            ('OOD Acc', ('c', '^')),
-            ('OOD Area', ('r', 's')),
-            ('ALL Area', ('brown', 'D')),
+            ('OOD Area', ('b', '')),
+            ('Random Area', ('r', '')),
         ]
         ids = [
             str(i) + '_' + str(args.depth - i) for i in range(args.depth + 1)]
@@ -202,15 +200,21 @@ def get_steps(args, path):
     else:
         exp_ids = ['1', '2', '3', '4', '5']
     results = [[], [], [], []]
-    length = args.plot_size + 1
+    if args.plot_size < 0:
+        length = -1
+    else:
+        length = args.plot_size + 1
     for e in exp_ids:
         fn = os.path.join(path + e, "log.txt")
         eval1, eval2, eval3, eval4, steps = load(fn)
-        results[0].append(eval1[1:length])
-        results[1].append(eval2[1:length])
-        results[2].append(eval3[1:length])
-        results[3].append(eval4[1:length])
-    steps = steps[1:length]
+        results[0].append(eval1[:length])
+        results[1].append(eval2[:length])
+        results[2].append(eval3[:length])
+        results[3].append(eval4[:length])
+    steps = steps[:length]
+    for i in range(len(steps)):
+        if i % 10 != 0:
+            steps[i] = ''
 
     means = []
     stds = []
@@ -233,10 +237,10 @@ def step_main(args):
     font = {'family': 'serif'}
     rc('font', **font)
 
-    acc_mean = [eval2, eval3, eval4]
-    acc_std = [std2, std3, std4]
+    acc_mean = [eval3, eval4]
+    acc_std = [std3, std4]
     draw(args, acc_mean, acc_std, legends, output_list[0], colors, lw, loc,
-         steps, 'Accuracy (%)', 'Training Steps', font_size=18)
+         steps, 'Accuracy (%)', 'Training Steps')
 
 
 def main(args):
@@ -255,7 +259,7 @@ if __name__ == '__main__':
                         help='Experiment type.')
     parser.add_argument('--depth', type=int, default=7,
                         help='Depth of the network.')
-    parser.add_argument('--plot_size', type=int, default=10,
+    parser.add_argument('--plot_size', type=int, default=-1,
                         help='Number of horizontal points to plot.')
     parser.add_argument('--analysis', action='store_true', default=False,
                         help='Analysis.')
