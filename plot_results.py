@@ -202,14 +202,15 @@ def get_steps(args, path):
     else:
         exp_ids = ['1', '2', '3', '4', '5']
     results = [[], [], [], []]
+    length = 11
     for e in exp_ids:
         fn = os.path.join(path + e, "log.txt")
         eval1, eval2, eval3, eval4, steps = load(fn)
-        results[0].append(eval1[1:-1])
-        results[1].append(eval2[1:-1])
-        results[2].append(eval3[1:-1])
-        results[3].append(eval4[1:-1])
-    steps = steps[1:-1]
+        results[0].append(eval1[1:length])
+        results[1].append(eval2[1:length])
+        results[2].append(eval3[1:length])
+        results[3].append(eval4[1:length])
+    steps = steps[1:length]
 
     means = []
     stds = []
