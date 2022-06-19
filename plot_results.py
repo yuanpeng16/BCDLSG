@@ -6,7 +6,7 @@ from matplotlib import rc
 
 
 def draw(args, lists, stds, legends, basedir, colors, lw, loc, labels, v_name,
-         plot=True):
+         u_name, plot=True, font_size = 24):
     x_lim = len(lists[0])
     directory = os.path.dirname(basedir)
     if not os.path.exists(directory):
@@ -26,7 +26,6 @@ def draw(args, lists, stds, legends, basedir, colors, lw, loc, labels, v_name,
 
     plt.figure(figsize=(9, 6))
     ax = plt.subplot(1, 1, 1)
-    font_size = 24
     ax.tick_params(axis='both', which='major', labelsize=font_size)
 
     for i, (l, s, legend) in enumerate(zip(lists, stds, legends)):
@@ -50,7 +49,7 @@ def draw(args, lists, stds, legends, basedir, colors, lw, loc, labels, v_name,
     ax.set_xticks(range(x_lim))
     legend_font_size = 18
     ax.legend(loc=loc, prop={'size': legend_font_size})
-    ax.set_xlabel('Common-Individual Layer Depth', fontsize=font_size)
+    ax.set_xlabel(u_name, fontsize=font_size)
     ax.set_ylabel(v_name, fontsize=font_size)
     ax.set_xticklabels(labels)
     ax.xaxis.labelpad = 5
@@ -62,12 +61,23 @@ def get_list(lines, key):
     return [100 * float(x[key]) for x in lines]
 
 
-def load(fn):
+def get_list_index(lines):
+    ret = []
+    for x in lines:
+        if x[0] == 'final':
+            ret.append(-1)
+        else:
+            ret.append(int(x[0]))
+    return ret
+
+
+def load(fn, steps=False):
     if os.path.exists(fn):
         with open(fn, 'r') as f:
             lines = f.readlines()
         lines = [x.strip().split(' ') for x in lines]
         index = [3, 8, 9, 14]
+        steps = get_list_index(lines)
         eval1 = get_list(lines, index[0])
         eval2 = get_list(lines, index[1])
         eval3 = get_list(lines, index[2])
@@ -77,7 +87,7 @@ def load(fn):
         eval2 = []
         eval3 = []
         eval4 = []
-    return eval1, eval2, eval3, eval4
+    return eval1, eval2, eval3, eval4, steps
 
 
 def get_results(args, path):
@@ -88,7 +98,7 @@ def get_results(args, path):
     results = [[], [], [], []]
     for e in exp_ids:
         fn = os.path.join(path + e, "log.txt")
-        eval1, eval2, eval3, eval4 = load(fn)
+        eval1, eval2, eval3, eval4, _ = load(fn)
         results[0].append(eval1[-1])
         results[1].append(eval2[-1])
         results[2].append(eval3[-1])
@@ -126,13 +136,34 @@ def get_params(args):
         ]
         lw = 2
         loc = 'right'
+    elif args.experiment_type == 'steps':
+        pairs = [
+            ('IID Acc', ('b', 'v')),
+            ('OOD Acc', ('c', '^')),
+            ('OOD Area', ('r', 's')),
+            ('ALL Area', ('brown', 'D')),
+        ]
+        ids = [
+            str(i) + '_' + str(args.depth - i) for i in range(args.depth + 1)]
+        labels = [
+            str(i) + '-' + str(args.depth - i) for i in range(args.depth + 1)]
+        eid = args.experiment_id + '_'
+        file_list = ['logs/' + eid + c + '_' for c in ids]
+        legends = [x[0] for x in pairs]
+        colors = [x[1] for x in pairs]
+        out_name = eid + 'acc'
+        output_list = [
+            'outputs/' + out_name + '/' + out_name + '_steps'
+        ]
+        lw = 2
+        loc = 'upper right'
     else:
         print(args.experiment_type + " is not defined.")
         assert False
     return file_list, legends, output_list, colors, lw, loc, labels
 
 
-def main(args):
+def final_main(args):
     file_list, legends, output_list, colors, lw, loc, labels = get_params(args)
     eval1_list = []
     eval2_list = []
@@ -162,7 +193,56 @@ def main(args):
     acc_mean = [eval2_list, eval3_list, eval4_list]
     acc_std = [std2_list, std3_list, std4_list]
     draw(args, acc_mean, acc_std, legends, output_list[0], colors, lw, loc,
-         labels, 'Accuracy (%)')
+         labels, 'Accuracy (%)', 'Common-Individual Layer Depth')
+
+
+def get_steps(args, path):
+    if args.first_experiment:
+        exp_ids = ['1']
+    else:
+        exp_ids = ['1', '2', '3', '4', '5']
+    results = [[], [], [], []]
+    for e in exp_ids:
+        fn = os.path.join(path + e, "log.txt")
+        eval1, eval2, eval3, eval4, steps = load(fn)
+        results[0].append(eval1[1:-1])
+        results[1].append(eval2[1:-1])
+        results[2].append(eval3[1:-1])
+        results[3].append(eval4[1:-1])
+    steps = steps[1:-1]
+
+    means = []
+    stds = []
+    for result in results:
+        matrix = np.asarray(result)
+        means.append(np.mean(matrix, axis=0))
+        stds.append(np.std(matrix, axis=0))
+
+    return means, stds, steps
+
+
+def step_main(args):
+    file_list, legends, output_list, colors, lw, loc, labels = get_params(args)
+
+    fn = file_list[-1]
+    means, stds, steps = get_steps(args, fn)
+    eval1, eval2, eval3, eval4 = means
+    std1, std2, std3, std4 = stds
+
+    font = {'family': 'serif'}
+    rc('font', **font)
+
+    acc_mean = [eval2, eval3, eval4]
+    acc_std = [std2, std3, std4]
+    draw(args, acc_mean, acc_std, legends, output_list[0], colors, lw, loc,
+         steps, 'Accuracy (%)', 'Training Steps', font_size=18)
+
+
+def main(args):
+    if args.experiment_type == 'main':
+        final_main(args)
+    else:
+        step_main(args)
 
 
 if __name__ == '__main__':
