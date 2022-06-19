@@ -202,7 +202,7 @@ def get_steps(args, path):
     else:
         exp_ids = ['1', '2', '3', '4', '5']
     results = [[], [], [], []]
-    length = 11
+    length = args.plot_size + 1
     for e in exp_ids:
         fn = os.path.join(path + e, "log.txt")
         eval1, eval2, eval3, eval4, steps = load(fn)
@@ -255,6 +255,8 @@ if __name__ == '__main__':
                         help='Experiment type.')
     parser.add_argument('--depth', type=int, default=7,
                         help='Depth of the network.')
+    parser.add_argument('--plot_size', type=int, default=10,
+                        help='Number of horizontal points to plot.')
     parser.add_argument('--analysis', action='store_true', default=False,
                         help='Analysis.')
     parser.add_argument('--first_experiment', action='store_true',
