@@ -20,14 +20,15 @@ mkdir -p ${MYDIR}
 cp ${ABS_PATH} ${MYDIR}
 
 CUDA_VISIBLE_DEVICES=${GPU_ID} \
-python3 -u mnist.py \
+python3 -u main.py \
 --parameter_random_seed ${RANDOM_SEED} \
 --merge_type added \
 --model_type cnn \
+--evaluator_type filtered \
 --log_interval 1 \
 --batch_size 512 \
 --lr 0.001 \
---steps 100 \
+--steps 300 \
 --n_hidden_nodes 64 \
 --n_common_layers 7 \
 --n_separate_layers 0 \

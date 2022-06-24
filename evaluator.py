@@ -12,6 +12,12 @@ def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
         else:
             ev = AdversarialEvaluator(
                 args, model, datasets, large_datasets, test_label_pairs)
+    elif args.evaluator_type == 'output':
+        ev = OutputEvaluator(args, model, datasets, large_datasets,
+                             test_label_pairs)
+    elif args.evaluator_type == 'filtered':
+        ev = FilteredOutputEvaluator(args, model, datasets, large_datasets,
+                                     test_label_pairs)
     else:
         ev = Evaluator(args, model, datasets, large_datasets, test_label_pairs)
     return ev
@@ -102,6 +108,73 @@ class Evaluator(object):
 
     def large_evaluate_all(self):
         return self.evaluate_datasets(self.large_datasets)
+
+
+class OutputEvaluator(Evaluator):
+    def output_evaluate(self, x, y, output_labels):
+        y_hat = self.forward(x)
+        n_samples = len(y[0])
+        y1_hat_list = y_hat[0]
+        y2_hat_list = y_hat[1]
+        hit1, hit2, hit, sg_hit = 0, 0, 0, 0
+        for i in range(n_samples):
+            y1_hat = y1_hat_list[i]
+            y2_hat = y2_hat_list[i]
+            if (y1_hat, y2_hat) not in output_labels:
+                sg_hit += 1
+            h1 = y[0][i][y1_hat] == 1
+            h2 = y[1][i][y2_hat] == 1
+            if h1:
+                hit1 += 1
+            if h2:
+                hit2 += 1
+            if h1 and h2:
+                hit += 1
+        acc = hit / n_samples
+        acc1 = hit1 / n_samples
+        acc2 = hit2 / n_samples
+        sg_acc = sg_hit / n_samples
+        return acc1, acc2, acc, sg_acc
+
+    def get_output_labels(self, y1_hat_list, y2_hat_list):
+        output_labels = set()
+        for y1_hat, y2_hat in zip(y1_hat_list, y2_hat_list):
+            output_labels.add((y1_hat, y2_hat))
+        return output_labels
+
+    def evaluate_datasets(self, datasets):
+        x, y = self.large_datasets[0]
+        y_hat = self.forward(x)
+        y1_hat_list = y_hat[0]
+        y2_hat_list = y_hat[1]
+        output_labels = self.get_output_labels(y1_hat_list, y2_hat_list)
+
+        ret = []
+        for dataset in datasets:
+            ret.extend(
+                self.output_evaluate(dataset[0], dataset[1], output_labels))
+            ret.append("\t")
+        return ret
+
+
+class FilteredOutputEvaluator(OutputEvaluator):
+    def get_output_labels(self, y1_hat_list, y2_hat_list):
+        ret = super().get_output_labels(y1_hat_list, y2_hat_list)
+        print('Outputs', len(ret))
+        return ret
+
+    def get_output_labels1(self, y1_hat_list, y2_hat_list):
+        output_labels = {}
+        for y1_hat, y2_hat in zip(y1_hat_list, y2_hat_list):
+            key = (y1_hat, y2_hat)
+            output_labels[key] = output_labels.get(key, 0) + 1
+        terms = list(output_labels.items())
+        print(len(terms))
+        print(terms[:5])
+        terms = sorted(terms, key=lambda x: x[1], reverse=True)
+        print(terms[:5])
+        exit()
+        return output_labels
 
 
 class AdversarialEvaluator(Evaluator):

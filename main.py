@@ -101,6 +101,8 @@ if __name__ == '__main__':
                         help='Learning rate.')
     parser.add_argument('--merge_type', type=str, default='paired',
                         help='Merge type.')
+    parser.add_argument('--evaluator_type', type=str, default='normal',
+                        help='Evaluator type.')
     parser.add_argument('--save_image', action='store_true', default=False,
                         help='Show image and stop.')
     parser.add_argument('--adversarial', action='store_true',
