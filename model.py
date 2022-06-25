@@ -6,6 +6,7 @@ import numpy as np
 
 from resnet import get_resnet_model
 from separate_transformer import get_transformer_model
+from separate_vision_transformer import get_a_vision_transformer_layer
 
 
 def get_model_generator(args, input_shape, output_nodes):
@@ -19,6 +20,8 @@ def get_model_generator(args, input_shape, output_nodes):
         model = ResidualCNNModelGenerator(args, input_shape, output_nodes)
     elif args.model_type == 'resnet':
         model = SeparatedResNet(args, input_shape, output_nodes)
+    elif args.model_type == 'vision_transformer':
+        model = SeparateVisionTransformer(args, input_shape, output_nodes)
     elif args.model_type == 'transformer':
         model = SeparateTransformer(args, input_shape, output_nodes)
     elif args.model_type == 'lstm':
@@ -221,6 +224,32 @@ class LSTMModelGenerator(DeepModelGenerator):
             layer_id = n_common_layers + i
             x1 = self.get_one_layer(h1, x1, layer_id)
             x2 = self.get_one_layer(h2, x2, layer_id)
+        return x1, x2
+
+    def get_main_model(self, x):
+        x1, x2 = self.get_core_structure(self.args.n_hidden_nodes,
+                                         self.args.n_common_layers,
+                                         self.args.n_separate_layers, x)
+        return x1, x2
+
+
+class SeparateVisionTransformer(DeepModelGenerator):
+    def get_one_layer(self, hn, x, layer_id, num_layers):
+        return get_a_vision_transformer_layer(
+            x, hn, layer_id, num_layers, self.input_shape[0])
+
+    def get_core_structure(self, hn, n_common_layers, n_separate_layers, x):
+        num_layers = n_common_layers + n_separate_layers
+        x = self.get_one_layer(hn, x, -1, num_layers)
+        for i in range(n_common_layers):
+            x = self.get_one_layer(hn, x, i, num_layers)
+        x1, x2 = x, x
+        h1 = hn
+        h2 = hn
+        for i in range(n_separate_layers):
+            layer_id = n_common_layers + i
+            x1 = self.get_one_layer(h1, x1, layer_id, num_layers)
+            x2 = self.get_one_layer(h2, x2, layer_id, num_layers)
         return x1, x2
 
     def get_main_model(self, x):
