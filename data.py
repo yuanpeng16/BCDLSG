@@ -270,7 +270,10 @@ class MaxDataGenerator(AddedDataGenerator):
 class TextDataGenerator(RandomDataGenerator):
     def __init__(self, args):
         self.args = args
-        self.output_nodes = 2
+        if args.dataset1 == 'imdb':
+            self.output_nodes = 2
+        else:
+            self.output_nodes = 10
 
         maxlen = 200
         self.max_length = 2 * maxlen + 1
@@ -291,13 +294,40 @@ class TextDataGenerator(RandomDataGenerator):
         self.test_label_pairs = []
         self.get_label_splits()
 
+    def _filter(self, x_list, y_list, label_map):
+        x_ret = []
+        y_ret = []
+        for x, y in zip(x_list, y_list):
+            if y in label_map:
+                x_ret.append(x)
+                y_ret.append(label_map[y])
+        return np.asarray(x_ret), np.asarray(y_ret)
+
+    def _convert(self, data):
+        (x_train, y_train), (x_test, y_test) = data
+        stat = {}
+        for y in y_train:
+            stat[y] = stat.get(y, 0) + 1
+        l = sorted(list(stat.items()), key=lambda x: x[1], reverse=True)
+        label_map = {x[0]:i for i, x in enumerate(l[:self.output_nodes])}
+
+        x_train, y_train = self._filter(x_train, y_train, label_map)
+        x_test, y_test = self._filter(x_test, y_test, label_map)
+        return (x_train, y_train), (x_test, y_test)
+
     def _get_data(self, data_name, maxlen):
         if data_name == 'imdb':
             dataset = tf.keras.datasets.imdb
+        elif data_name == 'reuters':
+            dataset = tf.keras.datasets.reuters
         else:
             assert False
 
         (x_train, y_train), (x_test, y_test) = dataset.load_data(maxlen=maxlen)
+        if data_name == 'reuters':
+            data = (x_train, y_train), (x_test, y_test)
+            (x_train, y_train), (x_test, y_test) = self._convert(data)
+
         shape = x_train.shape[1:]
         train_samples = [x_train, y_train]
         test_samples = [x_test, y_test]
@@ -316,6 +346,8 @@ class TextDataGenerator(RandomDataGenerator):
         return data
 
     def is_train_label(self, x, y):
+        if self.output_nodes == 10:
+            return super().is_train_label(x, y)
         if self.args.label_split == 'tile':
             return x < 1 or y < 1
         elif self.args.label_split == 'diagonal':

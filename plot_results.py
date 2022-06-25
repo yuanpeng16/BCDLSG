@@ -47,8 +47,9 @@ def draw(args, lists, stds, legends, basedir, colors, lw, loc, labels, v_name,
 
     ax.set_xlim([0, x_lim - 1])
     ax.set_xticks(range(x_lim))
-    legend_font_size = 18
-    ax.legend(loc=loc, prop={'size': legend_font_size})
+    if args.show_legend:
+        legend_font_size = 18
+        ax.legend(loc=loc, prop={'size': legend_font_size})
     ax.set_xlabel(u_name, fontsize=font_size)
     ax.set_ylabel(v_name, fontsize=font_size)
     ax.set_xticklabels(labels)
@@ -135,7 +136,7 @@ def get_params(args):
             'outputs/' + out_name + '/' + out_name
         ]
         lw = 2
-        loc = 'right'
+        loc = 'upper right'
     elif args.experiment_type == 'steps':
         pairs = [
             ('OOD Area', ('b', '')),
@@ -190,6 +191,7 @@ def final_main(args):
 
     acc_mean = [eval2_list, eval3_list, eval4_list]
     acc_std = [std2_list, std3_list, std4_list]
+    legends = legends[1:]
     draw(args, acc_mean, acc_std, legends, output_list[0], colors, lw, loc,
          labels, 'Accuracy (%)', 'Common-Individual Layer Depth')
 
@@ -266,6 +268,8 @@ if __name__ == '__main__':
     parser.add_argument('--first_experiment', action='store_true',
                         default=False,
                         help='Visualize first experiment.')
+    parser.add_argument('--show_legend', action='store_true',
+                        default=False, help='Show legend.')
     parser.add_argument('--random_threshold', type=str, default='75',
                         help='Threshold to randomize the second input.')
     main(parser.parse_args())
