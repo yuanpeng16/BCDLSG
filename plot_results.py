@@ -48,7 +48,7 @@ def draw(args, lists, stds, legends, basedir, colors, lw, loc, labels, v_name,
     ax.set_xlim([0, x_lim - 1])
     ax.set_xticks(range(x_lim))
     if args.show_legend:
-        legend_font_size = 18
+        legend_font_size = font_size
         ax.legend(loc=loc, prop={'size': legend_font_size})
     ax.set_xlabel(u_name, fontsize=font_size)
     ax.set_ylabel(v_name, fontsize=font_size)
@@ -118,10 +118,10 @@ def get_results(args, path):
 def get_params(args):
     if args.experiment_type == 'main':
         pairs = [
-            ('IID Acc', ('b', 'v')),
-            ('OOD Acc', ('c', '^')),
-            ('OOD Area', ('r', 's')),
-            ('ALL Area', ('brown', 'D')),
+            ('Eval Accuracy', ('b', 'v')),
+            ('Test Accuracy', ('c', '^')),
+            ('Test Ratio', ('r', 's')),
+            ('Random Ratio', ('brown', 'D')),
         ]
         ids = [
             str(i) + '_' + str(args.depth - i) for i in range(args.depth + 1)]
