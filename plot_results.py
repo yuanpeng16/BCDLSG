@@ -118,10 +118,10 @@ def get_results(args, path):
 def get_params(args):
     if args.experiment_type == 'main':
         pairs = [
-            ('Eval Accuracy', ('b', 'v')),
-            ('Test Accuracy', ('c', '^')),
-            ('Test Ratio', ('r', 's')),
-            ('Random Ratio', ('brown', 'D')),
+            ('Eval Sample Acc.', ('b', 'v')),
+            ('Test Sample Acc.', ('c', '^')),
+            ('Test Set Acc.', ('r', 's')),
+            ('Rnd. Set Acc.', ('brown', 'D')),
         ]
         ids = [
             str(i) + '_' + str(args.depth - i) for i in range(args.depth + 1)]
@@ -193,7 +193,7 @@ def final_main(args):
     acc_std = [std2_list, std3_list, std4_list]
     legends = legends[1:]
     draw(args, acc_mean, acc_std, legends, output_list[0], colors, lw, loc,
-         labels, 'Accuracy (%)', 'Common-Individual Layer Depth')
+         labels, 'Accuracy (%)', 'Shared-Individual Layer Depths')
 
 
 def get_steps(args, path):
