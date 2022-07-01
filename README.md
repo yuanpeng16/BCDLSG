@@ -1,7 +1,10 @@
 # Gradient Descent Resists Compositionality
 
 ## Experiments
+    #DNN
     sh experiments/batch/fashion_mnist_added_diagonal.sh
+    # LSTM horizontal
+    sh experiments/batch/reuters_reuters_diagonal_lstm_horizontal.sh
 
 ## Additional experiments
 #### Equally difficult factors
@@ -21,6 +24,8 @@
     python3 plot_results.py --experiment_id fashion_mnist_added_diagonal --show_legend
     # ResNet
     python3 plot_results.py --experiment_id cifar_fashion_added_diagonal_resnet --depth 5
+    # LSTM horizontal
+    python3 plot_results.py --experiment_id reuters_reuters_diagonal_lstm_horizontal --depth 2
 
 ## Plot training process
     python3 plot_results.py --experiment_id fashion_mnist_added_diagonal_dnn_early --experiment_type steps --show_legend
