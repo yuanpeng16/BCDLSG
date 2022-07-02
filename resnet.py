@@ -11,6 +11,7 @@ from official.vision.image_classification.resnet.resnet_model import \
     identity_block
 from official.vision.image_classification.resnet.resnet_model import \
     initializers
+from abstract_model import AbstractModelGenerator
 
 layers = tf.keras.layers
 
@@ -181,3 +182,22 @@ def get_output_layer(x, prefix, num_classes=10,
         name=prefix + 'fc1000')(
         x)
     return x
+
+
+class SeparatedResNet(AbstractModelGenerator):
+    def __init__(self, args, input_shape, output_nodes):
+        super().__init__(args, input_shape, output_nodes)
+        assert self.depth == 5
+
+    def get_output_layer(self, x, activation, name):
+        return get_output_layer(x, name, num_classes=self.output_nodes,
+                                ff_activation=activation,
+                                use_l2_regularizer=False)
+
+    def get_one_layer(self, hn, x, index, part):
+        if part == 0:
+            scale = 1
+        else:
+            scale = 2
+        prefix = 'Net' + str(part)
+        return get_stage(x, prefix, scale, index, use_l2_regularizer=False)

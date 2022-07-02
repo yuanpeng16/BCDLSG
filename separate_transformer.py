@@ -8,6 +8,7 @@ from official.nlp.transformer import model_utils
 from transformer import Transformer
 from transformer import EncoderStack
 from transformer import PrePostProcessingWrapper
+from abstract_model import AbstractModelGenerator
 
 
 class SeparatedEncoderStack(EncoderStack):
@@ -247,3 +248,10 @@ def get_transformer_model(x, hn, n_common_layers, n_separate_layers,
     }
     internal_model = SeparateTransformer(params, name="transformer_v2")
     return internal_model([x], training=False)
+
+
+class SeparateTransformer(AbstractModelGenerator):
+    def get_main_model(self, x):
+        return get_transformer_model(
+            x, self.args.n_hidden_nodes, self.args.n_common_layers,
+            self.args.n_separate_layers, self.vocab_size)

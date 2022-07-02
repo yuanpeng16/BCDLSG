@@ -1,9 +1,9 @@
 import tensorflow as tf
 
 from abstract_model import AbstractModelGenerator
-from resnet import get_stage, get_output_layer
-from separate_transformer import get_transformer_model
-from separate_vision_transformer import get_a_vision_transformer_layer
+from resnet import SeparatedResNet
+from separate_transformer import SeparateTransformer
+from separate_vision_transformer import SeparateVisionTransformer
 
 
 def get_model_generator(args, input_shape, output_nodes):
@@ -57,41 +57,3 @@ class LSTMModelGenerator(AbstractModelGenerator):
         x = self.get_intermediate_layer(hn, x)
         return tf.keras.layers.Flatten()(x)
 
-
-class SeparatedResNet(AbstractModelGenerator):
-    def __init__(self, args, input_shape, output_nodes):
-        super().__init__(args, input_shape, output_nodes)
-        assert self.depth == 5
-
-    def get_output_layer(self, x, activation, name):
-        return get_output_layer(x, name, num_classes=self.output_nodes,
-                                ff_activation=activation,
-                                use_l2_regularizer=False)
-
-    def get_one_layer(self, hn, x, index, part):
-        if part == 0:
-            scale = 1
-        else:
-            scale = 2
-        prefix = 'Net' + str(part)
-        return get_stage(x, prefix, scale, index, use_l2_regularizer=False)
-
-
-class SeparateVisionTransformer(AbstractModelGenerator):
-    def constant_n_hidden_nodes(self):
-        return True
-
-    def convert_input(self, x):
-        return get_a_vision_transformer_layer(
-            x, 0, -1, self.depth, self.input_shape[0])
-
-    def get_one_layer(self, hn, x, index, part):
-        return get_a_vision_transformer_layer(
-            x, hn, index, self.depth, self.input_shape[0])
-
-
-class SeparateTransformer(AbstractModelGenerator):
-    def get_main_model(self, x):
-        return get_transformer_model(
-            x, self.args.n_hidden_nodes, self.args.n_common_layers,
-            self.args.n_separate_layers, self.vocab_size)

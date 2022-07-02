@@ -1,10 +1,11 @@
 import tensorflow as tf
-from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.python.framework import ops
 from tensorflow.python.ops import math_ops
 
 from official.nlp.transformer import attention_layer
+
+from abstract_model import AbstractModelGenerator
 
 #https://keras.io/examples/vision/image_classification_with_vision_transformer
 
@@ -100,3 +101,16 @@ def get_a_vision_transformer_layer(
         x3 = mlp(x3, hidden_units=transformer_units, dropout_rate=0.1)
         # Skip connection 2.
         return layers.Add()([x3, x2])
+
+
+class SeparateVisionTransformer(AbstractModelGenerator):
+    def constant_n_hidden_nodes(self):
+        return True
+
+    def convert_input(self, x):
+        return get_a_vision_transformer_layer(
+            x, 0, -1, self.depth, self.input_shape[0])
+
+    def get_one_layer(self, hn, x, index, part):
+        return get_a_vision_transformer_layer(
+            x, hn, index, self.depth, self.input_shape[0])
