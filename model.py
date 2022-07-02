@@ -1,9 +1,9 @@
 import tensorflow as tf
 
 from abstract_model import AbstractModelGenerator
-from resnet import SeparatedResNet
-from separate_transformer import SeparateTransformer
-from separate_vision_transformer import SeparateVisionTransformer
+from resnet import ResNetGenerator
+from separate_transformer import TransformerGenerator
+from separate_vision_transformer import VisionTransformerGenerator
 
 
 def get_model_generator(args, input_shape, output_nodes):
@@ -12,13 +12,13 @@ def get_model_generator(args, input_shape, output_nodes):
     elif args.model_type == 'cnn':
         model = CNNModelGenerator(args, input_shape, output_nodes)
     elif args.model_type == 'resnet':
-        model = SeparatedResNet(args, input_shape, output_nodes)
+        model = ResNetGenerator(args, input_shape, output_nodes)
     elif args.model_type == 'vision_transformer':
-        model = SeparateVisionTransformer(args, input_shape, output_nodes)
-    elif args.model_type == 'transformer':
-        model = SeparateTransformer(args, input_shape, output_nodes)
+        model = VisionTransformerGenerator(args, input_shape, output_nodes)
     elif args.model_type == 'lstm':
         model = LSTMModelGenerator(args, input_shape, output_nodes)
+    elif args.model_type == 'transformer':
+        model = TransformerGenerator(args, input_shape, output_nodes)
     else:
         assert False
     return model

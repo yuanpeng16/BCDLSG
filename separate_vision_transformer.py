@@ -103,7 +103,7 @@ def get_a_vision_transformer_layer(
         return layers.Add()([x3, x2])
 
 
-class SeparateVisionTransformer(AbstractModelGenerator):
+class VisionTransformerGenerator(AbstractModelGenerator):
     def constant_n_hidden_nodes(self):
         return True
 

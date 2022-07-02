@@ -250,7 +250,7 @@ def get_transformer_model(x, hn, n_common_layers, n_separate_layers,
     return internal_model([x], training=False)
 
 
-class SeparateTransformer(AbstractModelGenerator):
+class TransformerGenerator(AbstractModelGenerator):
     def get_main_model(self, x):
         return get_transformer_model(
             x, self.args.n_hidden_nodes, self.args.n_common_layers,

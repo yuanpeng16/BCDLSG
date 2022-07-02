@@ -184,7 +184,7 @@ def get_output_layer(x, prefix, num_classes=10,
     return x
 
 
-class SeparatedResNet(AbstractModelGenerator):
+class ResNetGenerator(AbstractModelGenerator):
     def __init__(self, args, input_shape, output_nodes):
         super().__init__(args, input_shape, output_nodes)
         assert self.depth == 5
