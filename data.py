@@ -3,6 +3,8 @@ import numpy as np
 import random
 from PIL import Image
 
+from zeroshot_data import ZeroShotDataGenerator
+
 
 def get_data_generator(args):
     if args.merge_type == 'slide':
@@ -17,6 +19,8 @@ def get_data_generator(args):
         dg = MaxDataGenerator(args)
     elif args.merge_type == 'text':
         dg = TextDataGenerator(args)
+    elif args.merge_type == 'zero_shot':
+        dg = ZeroShotDataGenerator(args)
     else:
         assert False
     return dg
@@ -309,7 +313,7 @@ class TextDataGenerator(RandomDataGenerator):
         for y in y_train:
             stat[y] = stat.get(y, 0) + 1
         l = sorted(list(stat.items()), key=lambda x: x[1], reverse=True)
-        label_map = {x[0]:i for i, x in enumerate(l[:self.output_nodes])}
+        label_map = {x[0]: i for i, x in enumerate(l[:self.output_nodes])}
 
         x_train, y_train = self._filter(x_train, y_train, label_map)
         x_test, y_test = self._filter(x_test, y_test, label_map)
