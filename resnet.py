@@ -154,28 +154,30 @@ def stage5(x, prefix, scale, use_l2_regularizer=True):
     return x
 
 
-def get_resnet_model(x, prefix, scale, front, stage, num_classes=10,
-                     ff_activation='softmax', use_l2_regularizer=True):
+def get_stage(x, prefix, scale, stage, use_l2_regularizer=True):
     assert stage >= 0
-    assert stage < 6
-    if (front and stage > 0) or (not front and stage < 1):
-        x = stage1(x, prefix, scale, use_l2_regularizer)
-    if (front and stage > 1) or (not front and stage < 2):
+    assert stage < 5
+    if stage == 0:
+        return stage1(x, prefix, scale, use_l2_regularizer)
+    elif stage == 1:
         x = stage2(x, prefix, scale, use_l2_regularizer)
-    if (front and stage > 2) or (not front and stage < 3):
+    elif stage == 2:
         x = stage3(x, prefix, scale, use_l2_regularizer)
-    if (front and stage > 3) or (not front and stage < 4):
+    elif stage == 3:
         x = stage4(x, prefix, scale, use_l2_regularizer)
-    if (front and stage > 4) or (not front and stage < 5):
+    elif stage == 4:
         x = stage5(x, prefix, scale, use_l2_regularizer)
+    return x
 
-    if not front:
-        x = layers.Dense(
-            num_classes,
-            activation=ff_activation,
-            kernel_initializer=initializers.RandomNormal(stddev=0.01),
-            kernel_regularizer=_gen_l2_regularizer(use_l2_regularizer),
-            bias_regularizer=_gen_l2_regularizer(use_l2_regularizer),
-            name=prefix + 'fc1000')(
-            x)
+
+def get_output_layer(x, prefix, num_classes=10,
+                     ff_activation='softmax', use_l2_regularizer=True):
+    x = layers.Dense(
+        num_classes,
+        activation=ff_activation,
+        kernel_initializer=initializers.RandomNormal(stddev=0.01),
+        kernel_regularizer=_gen_l2_regularizer(use_l2_regularizer),
+        bias_regularizer=_gen_l2_regularizer(use_l2_regularizer),
+        name=prefix + 'fc1000')(
+        x)
     return x
