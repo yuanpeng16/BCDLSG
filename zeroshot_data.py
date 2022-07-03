@@ -16,16 +16,25 @@ def get_label(weights, x):
     return sum([a * b for a, b in zip(weights, x)])
 
 
-def get_labels(fn):
-    with open(fn, 'r') as f:
-        lines = f.readlines()
-    matrix = [[int(x) for x in line.strip().split()[6:]] for line in lines]
-    matrix = np.asarray(matrix)
+def get_combined_labels(matrix):
     mean = np.mean(matrix, 0)
     distance = np.abs(mean - 0.5)
     ordered = sorted(enumerate(distance), key=lambda x: x[1])
     first_labels = [ordered[0][0], ordered[2][0], ordered[4][0]]
     second_labels = [ordered[1][0], ordered[3][0], ordered[5][0]]
+    return first_labels, second_labels
+
+
+def get_label_matrix(fn):
+    with open(fn, 'r') as f:
+        lines = f.readlines()
+    matrix = [[int(x) for x in line.strip().split()[6:]] for line in lines]
+    matrix = np.asarray(matrix)
+    return matrix
+
+
+def get_labels(matrix, combined_labels):
+    first_labels, second_labels = combined_labels
     assert len(first_labels) == len(second_labels)
     weights = [2 ** i for i in range(len(first_labels))]
 
@@ -68,12 +77,16 @@ class ZeroShotDataGenerator(object):
         fn_y_train = y_folder + 'apascal_train.txt'
         fn_x_test = x_folder + 'feat_apascal_test.mat'
         fn_y_test = y_folder + 'apascal_test.txt'
-        self.train_samples = self.load_data(fn_x_train, fn_y_train, True)
-        self.test_samples = self.load_data(fn_x_test, fn_y_test, False)
+        train_label_matrix = get_label_matrix(fn_y_train)
+        test_label_matrix = get_label_matrix(fn_y_test)
+        combined_labels = get_combined_labels(train_label_matrix)
+        train_labels = get_labels(train_label_matrix, combined_labels)
+        test_labels = get_labels(test_label_matrix, combined_labels)
+        self.train_samples = self.load_data(fn_x_train, train_labels, True)
+        self.test_samples = self.load_data(fn_x_test, test_labels, False)
 
-    def load_data(self, fn_x, fn_y, is_train):
+    def load_data(self, fn_x, labels, is_train):
         feats = get_feat(fn_x)
-        labels = get_labels(fn_y)
         assert len(feats) == len(labels)
         x_list = []
         y_list = []

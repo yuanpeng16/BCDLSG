@@ -25,7 +25,7 @@ python3 -u mnist.py \
 --merge_type zero_shot \
 --model_type dnn \
 --log_interval 100 \
---batch_size 64 \
+--batch_size 512 \
 --lr 0.001 \
 --steps 1000 \
 --n_hidden_nodes 64 \
