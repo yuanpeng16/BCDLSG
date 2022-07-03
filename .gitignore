@@ -6,4 +6,3 @@ playground
 logs*
 outputs
 experiments/sanity_check
-zeroshot_datasets

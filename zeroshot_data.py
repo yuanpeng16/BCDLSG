@@ -19,6 +19,7 @@ def one_hot_pair(y, output_nodes):
 class ZeroShotDataGenerator(object):
     def __init__(self, args):
         self.args = args
+        self.dataset_dir = '../../data/zeroshot_datasets/'
         self.output_nodes = 2 ** 3
 
         # prepare label combinations
@@ -93,10 +94,28 @@ class ZeroShotDataGenerator(object):
             samples = np.random.rand(*samples.shape)
         return samples, y_list
 
+    def split_data(self, feats, labels):
+        assert len(feats) == len(labels)
+        x_train = []
+        y_train = []
+        x_test = []
+        y_test = []
+        for x, y in zip(feats, labels):
+            y_one_hot = one_hot_pair(y, self.output_nodes)
+            if y not in self.test_label_pairs:
+                x_train.append(x)
+                y_train.append(y_one_hot)
+            else:
+                x_test.append(x)
+                y_test.append(y_one_hot)
+        train_data = [np.asarray(x_train), np.asarray(y_train)]
+        test_data = [np.asarray(x_test), np.asarray(y_test)]
+        return train_data, test_data
+
 
 class APYDataGenerator(ZeroShotDataGenerator):
     def get_data(self):
-        path = 'zeroshot_datasets/apy/'
+        path = self.dataset_dir + 'apy/'
         x_folder = path + 'attribute_features/'
         y_folder = path + 'attribute_data/'
         fn_x_train = x_folder + 'feat_apascal_train.mat'
@@ -147,7 +166,7 @@ class APYDataGenerator(ZeroShotDataGenerator):
 
 class AWA2DataGenerator(ZeroShotDataGenerator):
     def get_data(self):
-        path = 'zeroshot_datasets/awa2/'
+        path = self.dataset_dir + 'awa2/'
         x_folder = path + 'AwA2-features/Animals_with_Attributes2/Features/ResNet101/'
         y_folder = path + 'AwA2-base/Animals_with_Attributes2/'
         fn_x_train = x_folder + 'AwA2-features.txt'
@@ -182,25 +201,35 @@ class AWA2DataGenerator(ZeroShotDataGenerator):
     def load_data(self, fn_x, fn_z, fn_y):
         labels = self.load_labels(fn_z, fn_y)
         feats = self.get_feat(fn_x)
-        assert len(feats) == len(labels)
-        x_train = []
-        y_train = []
-        x_test = []
-        y_test = []
-        for x, y in zip(feats, labels):
-            y_one_hot = one_hot_pair(y, self.output_nodes)
-            if y not in self.test_label_pairs:
-                x_train.append(x)
-                y_train.append(y_one_hot)
-            else:
-                x_test.append(x)
-                y_test.append(y_one_hot)
-        train_data = [np.asarray(x_train), np.asarray(y_train)]
-        test_data = [np.asarray(x_test), np.asarray(y_test)]
-        return train_data, test_data
+        return self.split_data(feats, labels)
+
+
+class CUBDataGenerator(ZeroShotDataGenerator):
+    def get_data(self):
+        path = self.dataset_dir + 'cub/CUB2002011/CUB_200_2011/CUB_200_2011/'
+        y_folder = path + 'attributes/'
+        fn_y_train = y_folder + 'image_attribute_labels.txt'
+        fn_f_train = path + 'feat.npy'
+        return self.load_data(fn_f_train, fn_y_train)
+
+    def load_labels(self, fn):
+        with open(fn, 'r') as f:
+            lines = f.readlines()
+        attributes = [int(line.strip().split()[2]) for line in lines]
+        matrix = np.asarray(attributes)
+        matrix = np.reshape(matrix, [-1, 312])
+        combined_labels = self.get_combined_labels(matrix)
+        return self.get_labels(matrix, combined_labels)
+
+    def load_data(self, fn_f_train, fn_y):
+        labels = self.load_labels(fn_y)
+        feats = np.load(fn_f_train, allow_pickle=True)
+        feats = feats / 255.0
+        ret = self.split_data(feats, labels)
+        return ret
 
 
 if __name__ == '__main__':
-    dg = APYDataGenerator(None)
+    dg = CUBDataGenerator(None)
     print(dg.get_training_samples(3))
     print(dg.get_test_samples(3))

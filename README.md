@@ -30,3 +30,9 @@
 ## Plot training process
     python3 plot_results.py --experiment_id fashion_mnist_added_diagonal_dnn_early --experiment_type steps --show_legend
     python3 plot_results.py --experiment_id cifar_fashion_added_diagonal_cnn_early --experiment_type steps
+
+## Zero-shot learning
+Please download data and put to corresponding folder.
+
+    # Preprocess
+    python3 preprocess_data.py
