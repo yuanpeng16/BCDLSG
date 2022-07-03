@@ -3,7 +3,8 @@ import numpy as np
 import random
 from PIL import Image
 
-from zeroshot_data import ZeroShotDataGenerator
+from zeroshot_data import APYDataGenerator
+from zeroshot_data import AWA2DataGenerator
 
 
 def get_data_generator(args):
@@ -20,7 +21,9 @@ def get_data_generator(args):
     elif args.merge_type == 'text':
         dg = TextDataGenerator(args)
     elif args.merge_type == 'zero_shot':
-        dg = ZeroShotDataGenerator(args)
+        dg = APYDataGenerator(args)
+    elif args.merge_type == 'zeroshot_awa2':
+        dg = AWA2DataGenerator(args)
     else:
         assert False
     return dg

@@ -2,48 +2,8 @@ import scipy.io
 import numpy as np
 
 
-def get_feat(fn):
-    mat = scipy.io.loadmat(fn)
-    feat = mat['feat']
-    matrix = feat.toarray()
-    matrix = np.transpose(matrix)
-    data = np.reshape(matrix, [-1, 199, 7, 7])
-    data = np.transpose(data, [0, 2, 3, 1])
-    return data
-
-
 def get_label(weights, x):
     return sum([a * b for a, b in zip(weights, x)])
-
-
-def get_combined_labels(matrix):
-    mean = np.mean(matrix, 0)
-    distance = np.abs(mean - 0.5)
-    ordered = sorted(enumerate(distance), key=lambda x: x[1])
-    first_labels = [ordered[0][0], ordered[2][0], ordered[4][0]]
-    second_labels = [ordered[1][0], ordered[3][0], ordered[5][0]]
-    return first_labels, second_labels
-
-
-def get_label_matrix(fn):
-    with open(fn, 'r') as f:
-        lines = f.readlines()
-    matrix = [[int(x) for x in line.strip().split()[6:]] for line in lines]
-    matrix = np.asarray(matrix)
-    return matrix
-
-
-def get_labels(matrix, combined_labels):
-    first_labels, second_labels = combined_labels
-    assert len(first_labels) == len(second_labels)
-    weights = [2 ** i for i in range(len(first_labels))]
-
-    outputs = []
-    for labels in matrix:
-        first_output = get_label(weights, [labels[i] for i in first_labels])
-        second_output = get_label(weights, [labels[i] for i in second_labels])
-        outputs.append((first_output, second_output))
-    return outputs
 
 
 def one_hot(a, output_nodes):
@@ -59,7 +19,6 @@ def one_hot_pair(y, output_nodes):
 class ZeroShotDataGenerator(object):
     def __init__(self, args):
         self.args = args
-        self.input_shape = (7, 7, 199)
         self.output_nodes = 2 ** 3
 
         # prepare label combinations
@@ -68,38 +27,34 @@ class ZeroShotDataGenerator(object):
             for y in range(self.output_nodes):
                 if not self.is_train_label(x, y):
                     self.test_label_pairs.add((x, y))
-
         # load data
-        path = '/home/yuanpeng/datasets/apy/'
-        x_folder = path + 'attribute_features/'
-        y_folder = path + 'attribute_data/'
-        fn_x_train = x_folder + 'feat_apascal_train.mat'
-        fn_y_train = y_folder + 'apascal_train.txt'
-        fn_x_test = x_folder + 'feat_apascal_test.mat'
-        fn_y_test = y_folder + 'apascal_test.txt'
-        train_label_matrix = get_label_matrix(fn_y_train)
-        test_label_matrix = get_label_matrix(fn_y_test)
-        combined_labels = get_combined_labels(train_label_matrix)
-        train_labels = get_labels(train_label_matrix, combined_labels)
-        test_labels = get_labels(test_label_matrix, combined_labels)
-        self.train_samples = self.load_data(fn_x_train, train_labels, True)
-        self.test_samples = self.load_data(fn_x_test, test_labels, False)
+        self.train_samples, self.test_samples = self.get_data()
+        self.input_shape = self.train_samples[0][0].shape
 
-    def load_data(self, fn_x, labels, is_train):
-        feats = get_feat(fn_x)
-        assert len(feats) == len(labels)
-        x_list = []
-        y_list = []
-        for x, y in zip(feats, labels):
-            if is_train:
-                if y not in self.test_label_pairs:
-                    x_list.append(x)
-                    y_list.append(one_hot_pair(y, self.output_nodes))
-            else:
-                if y in self.test_label_pairs:
-                    x_list.append(x)
-                    y_list.append(one_hot_pair(y, self.output_nodes))
-        return np.asarray(x_list), np.asarray(y_list)
+    def get_data(self):
+        raise NotImplementedError
+
+    def get_combined_labels(self, matrix):
+        mean = np.mean(matrix, 0)
+        distance = np.abs(mean - 0.5)
+        ordered = sorted(enumerate(distance), key=lambda x: x[1])
+        first_labels = [ordered[0][0], ordered[2][0], ordered[4][0]]
+        second_labels = [ordered[1][0], ordered[3][0], ordered[5][0]]
+        return first_labels, second_labels
+
+    def get_labels(self, matrix, combined_labels):
+        first_labels, second_labels = combined_labels
+        assert len(first_labels) == len(second_labels)
+        weights = [2 ** i for i in range(len(first_labels))]
+
+        outputs = []
+        for labels in matrix:
+            first_output = get_label(weights,
+                                     [labels[i] for i in first_labels])
+            second_output = get_label(weights,
+                                      [labels[i] for i in second_labels])
+            outputs.append((first_output, second_output))
+        return outputs
 
     def is_train_label(self, x, y):
         diff = (y - x + self.output_nodes) % self.output_nodes
@@ -139,7 +94,113 @@ class ZeroShotDataGenerator(object):
         return samples, y_list
 
 
+class APYDataGenerator(ZeroShotDataGenerator):
+    def get_data(self):
+        path = 'zeroshot_datasets/apy/'
+        x_folder = path + 'attribute_features/'
+        y_folder = path + 'attribute_data/'
+        fn_x_train = x_folder + 'feat_apascal_train.mat'
+        fn_y_train = y_folder + 'apascal_train.txt'
+        fn_x_test = x_folder + 'feat_apascal_test.mat'
+        fn_y_test = y_folder + 'apascal_test.txt'
+        train_label_matrix = self.get_label_matrix(fn_y_train)
+        test_label_matrix = self.get_label_matrix(fn_y_test)
+        combined_labels = self.get_combined_labels(train_label_matrix)
+        train_labels = self.get_labels(train_label_matrix, combined_labels)
+        test_labels = self.get_labels(test_label_matrix, combined_labels)
+        train_samples = self.load_data(fn_x_train, train_labels, True)
+        test_samples = self.load_data(fn_x_test, test_labels, False)
+        return train_samples, test_samples
+
+    def get_feat(self, fn):
+        mat = scipy.io.loadmat(fn)
+        feat = mat['feat']
+        matrix = feat.toarray()
+        matrix = np.transpose(matrix)
+        data = np.reshape(matrix, [-1, 199, 7, 7])
+        data = np.transpose(data, [0, 2, 3, 1])
+        return data
+
+    def get_label_matrix(self, fn):
+        with open(fn, 'r') as f:
+            lines = f.readlines()
+        matrix = [[int(x) for x in line.strip().split()[6:]] for line in lines]
+        matrix = np.asarray(matrix)
+        return matrix
+
+    def load_data(self, fn_x, labels, is_train):
+        feats = self.get_feat(fn_x)
+        assert len(feats) == len(labels)
+        x_list = []
+        y_list = []
+        for x, y in zip(feats, labels):
+            if is_train:
+                if y not in self.test_label_pairs:
+                    x_list.append(x)
+                    y_list.append(one_hot_pair(y, self.output_nodes))
+            else:
+                if y in self.test_label_pairs:
+                    x_list.append(x)
+                    y_list.append(one_hot_pair(y, self.output_nodes))
+        return np.asarray(x_list), np.asarray(y_list)
+
+
+class AWA2DataGenerator(ZeroShotDataGenerator):
+    def get_data(self):
+        path = 'zeroshot_datasets/awa2/'
+        x_folder = path + 'AwA2-features/Animals_with_Attributes2/Features/ResNet101/'
+        y_folder = path + 'AwA2-base/Animals_with_Attributes2/'
+        fn_x_train = x_folder + 'AwA2-features.txt'
+        fn_z_train = x_folder + 'AwA2-labels.txt'
+        fn_y_train = y_folder + 'predicate-matrix-binary.txt'
+        return self.load_data(fn_x_train, fn_z_train, fn_y_train)
+
+    def get_feat(self, fn):
+        with open(fn, 'r') as f:
+            lines = f.readlines()
+        matrix = [[float(x) for x in line.strip().split()] for line in lines]
+        matrix = np.asarray(matrix)
+        data = np.reshape(matrix, [-1, 8, 8, 32])
+        # data = np.reshape(matrix, [-1, 32, 8, 8])
+        # data = np.transpose(data, [0, 2, 3, 1])
+        return data
+
+    def load_labels(self, fn, afn):
+        with open(fn, 'r') as f:
+            lines = f.readlines()
+        labels = [int(line.strip()) for line in lines]
+
+        with open(afn, 'r') as f:
+            lines = f.readlines()
+        attributes = [[int(x) for x in line.strip().split()] for line in lines]
+
+        matrix = [attributes[y - 1] for y in labels]
+        matrix = np.asarray(matrix)
+        combined_labels = self.get_combined_labels(matrix)
+        return self.get_labels(matrix, combined_labels)
+
+    def load_data(self, fn_x, fn_z, fn_y):
+        labels = self.load_labels(fn_z, fn_y)
+        feats = self.get_feat(fn_x)
+        assert len(feats) == len(labels)
+        x_train = []
+        y_train = []
+        x_test = []
+        y_test = []
+        for x, y in zip(feats, labels):
+            y_one_hot = one_hot_pair(y, self.output_nodes)
+            if y not in self.test_label_pairs:
+                x_train.append(x)
+                y_train.append(y_one_hot)
+            else:
+                x_test.append(x)
+                y_test.append(y_one_hot)
+        train_data = [np.asarray(x_train), np.asarray(y_train)]
+        test_data = [np.asarray(x_test), np.asarray(y_test)]
+        return train_data, test_data
+
+
 if __name__ == '__main__':
-    dg = ZeroShotDataGenerator(None)
+    dg = APYDataGenerator(None)
     print(dg.get_training_samples(3))
     print(dg.get_test_samples(3))
