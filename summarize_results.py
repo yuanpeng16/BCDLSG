@@ -90,7 +90,11 @@ def main():
         ['DNN', 'fashion_fashion_added_diagonal_dnn_acc'],
         ['CNN', 'fashion_fashion_added_diagonal_cnn_acc'],
         ['Tile', 'fashion_mnist_added_tile_acc'],
-        ['Oneshot', 'fashion_mnist_added_oneshot_acc']
+        ['Oneshot', 'fashion_mnist_added_oneshot_acc'],
+        ['aPY DNN', 'apy_diagonal_dnn_acc'],
+        ['aPY CNN', 'apy_diagonal_cnn_acc'],
+        ['AwA2 DNN', 'zeroshot_awa2_diagonal_dnn_acc'],
+        ['AwA2 CNN', 'zeroshot_awa2_diagonal_cnn_acc']
     ]
     names = [x[1] for x in all_names]
     exp_names = [x[0] for x in all_names]
