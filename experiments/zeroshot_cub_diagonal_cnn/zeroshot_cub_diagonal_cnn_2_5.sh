@@ -25,7 +25,7 @@ python3 -u mnist.py \
 --merge_type zeroshot_cub \
 --model_type cnn \
 --log_interval 100 \
---batch_size 512 \
+--batch_size 256 \
 --lr 0.001 \
 --steps 1000 \
 --n_hidden_nodes 64 \
