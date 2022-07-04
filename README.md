@@ -35,4 +35,5 @@
 Please download data and put to corresponding folder.
 
     # Preprocess
-    python3 preprocess_data.py
+    python3 preprocess_data.py --dataest cub
+    python3 preprocess_data.py --dataest sun

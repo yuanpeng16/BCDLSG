@@ -6,6 +6,7 @@ from PIL import Image
 from zeroshot_data import APYDataGenerator
 from zeroshot_data import AWA2DataGenerator
 from zeroshot_data import CUBDataGenerator
+from zeroshot_data import SUNDataGenerator
 
 
 def get_data_generator(args):
@@ -27,6 +28,8 @@ def get_data_generator(args):
         dg = AWA2DataGenerator(args)
     elif args.merge_type == 'zeroshot_cub':
         dg = CUBDataGenerator(args)
+    elif args.merge_type == 'zeroshot_sun':
+        dg = SUNDataGenerator(args)
     else:
         assert False
     return dg

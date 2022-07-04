@@ -203,8 +203,15 @@ class AWA2DataGenerator(ZeroShotDataGenerator):
         feats = self.get_feat(fn_x)
         return self.split_data(feats, labels)
 
+class PreprocessedDataGenerator(ZeroShotDataGenerator):
+    def load_data(self, fn_f_train, fn_y):
+        labels = self.load_labels(fn_y)
+        feats = np.load(fn_f_train, allow_pickle=True)
+        feats = feats / 255.0
+        ret = self.split_data(feats, labels)
+        return ret
 
-class CUBDataGenerator(ZeroShotDataGenerator):
+class CUBDataGenerator(PreprocessedDataGenerator):
     def get_data(self):
         path = self.dataset_dir + 'cub/CUB2002011/CUB_200_2011/CUB_200_2011/'
         y_folder = path + 'attributes/'
@@ -221,15 +228,24 @@ class CUBDataGenerator(ZeroShotDataGenerator):
         combined_labels = self.get_combined_labels(matrix)
         return self.get_labels(matrix, combined_labels)
 
-    def load_data(self, fn_f_train, fn_y):
-        labels = self.load_labels(fn_y)
-        feats = np.load(fn_f_train, allow_pickle=True)
-        feats = feats / 255.0
-        ret = self.split_data(feats, labels)
-        return ret
+
+class SUNDataGenerator(PreprocessedDataGenerator):
+    def get_data(self):
+        path = self.dataset_dir + 'sun/'
+        y_folder = path + 'SUNAttributeDB/'
+        fn_y_train = y_folder + 'attributeLabels_continuous.mat'
+        fn_f_train = path + 'feat.npy'
+        return self.load_data(fn_f_train, fn_y_train)
+
+    def load_labels(self, fn):
+        mat = scipy.io.loadmat(fn)
+        feat = mat['labels_cv']
+        matrix = np.round(feat).astype(int)
+        combined_labels = self.get_combined_labels(matrix)
+        return self.get_labels(matrix, combined_labels)
 
 
 if __name__ == '__main__':
-    dg = CUBDataGenerator(None)
+    dg = SUNDataGenerator(None)
     print(dg.get_training_samples(3))
     print(dg.get_test_samples(3))
