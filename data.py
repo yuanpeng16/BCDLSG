@@ -22,7 +22,7 @@ def get_data_generator(args):
         dg = MaxDataGenerator(args)
     elif args.merge_type == 'text':
         dg = TextDataGenerator(args)
-    elif args.merge_type == 'zero_shot':
+    elif args.merge_type == 'zero_shot_apy':
         dg = APYDataGenerator(args)
     elif args.merge_type == 'zeroshot_awa2':
         dg = AWA2DataGenerator(args)

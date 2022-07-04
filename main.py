@@ -97,6 +97,8 @@ if __name__ == '__main__':
                         help='Log interval.')
     parser.add_argument('--steps', type=int, default=500,
                         help='Steps.')
+    parser.add_argument('--combined_labels', type=int, default=3,
+                        help='Combined labels.')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate.')
     parser.add_argument('--merge_type', type=str, default='paired',

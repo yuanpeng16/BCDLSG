@@ -19,6 +19,7 @@ def one_hot_pair(y, output_nodes):
 class ZeroShotDataGenerator(object):
     def __init__(self, args):
         self.args = args
+        self.labels = args.combined_labels
         self.dataset_dir = '../../data/zeroshot_datasets/'
         self.output_nodes = 2 ** 3
 
@@ -39,8 +40,8 @@ class ZeroShotDataGenerator(object):
         mean = np.mean(matrix, 0)
         distance = np.abs(mean - 0.5)
         ordered = sorted(enumerate(distance), key=lambda x: x[1])
-        first_labels = [ordered[0][0], ordered[2][0], ordered[4][0]]
-        second_labels = [ordered[1][0], ordered[3][0], ordered[5][0]]
+        first_labels = [ordered[2 * i][0] for i in range(self.labels)]
+        second_labels = [ordered[2 * i + 1][0] for i in range(self.labels)]
         return first_labels, second_labels
 
     def get_labels(self, matrix, combined_labels):
@@ -124,7 +125,9 @@ class APYDataGenerator(ZeroShotDataGenerator):
         fn_y_test = y_folder + 'apascal_test.txt'
         train_label_matrix = self.get_label_matrix(fn_y_train)
         test_label_matrix = self.get_label_matrix(fn_y_test)
-        combined_labels = self.get_combined_labels(train_label_matrix)
+        label_matrix = np.concatenate(
+            [train_label_matrix, test_label_matrix], 0)
+        combined_labels = self.get_combined_labels(label_matrix)
         train_labels = self.get_labels(train_label_matrix, combined_labels)
         test_labels = self.get_labels(test_label_matrix, combined_labels)
         train_samples = self.load_data(fn_x_train, train_labels, True)
@@ -203,6 +206,7 @@ class AWA2DataGenerator(ZeroShotDataGenerator):
         feats = self.get_feat(fn_x)
         return self.split_data(feats, labels)
 
+
 class PreprocessedDataGenerator(ZeroShotDataGenerator):
     def load_data(self, fn_f_train, fn_y):
         labels = self.load_labels(fn_y)
@@ -210,6 +214,7 @@ class PreprocessedDataGenerator(ZeroShotDataGenerator):
         feats = feats / 255.0
         ret = self.split_data(feats, labels)
         return ret
+
 
 class CUBDataGenerator(PreprocessedDataGenerator):
     def get_data(self):
