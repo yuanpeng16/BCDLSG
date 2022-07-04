@@ -21,7 +21,7 @@ class ZeroShotDataGenerator(object):
         self.args = args
         self.labels = args.combined_labels
         self.dataset_dir = '../../data/zeroshot_datasets/'
-        self.output_nodes = 2 ** 3
+        self.output_nodes = 2 ** self.labels
 
         # prepare label combinations
         self.test_label_pairs = set()
