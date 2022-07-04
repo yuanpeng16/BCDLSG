@@ -59,8 +59,14 @@ class ZeroShotDataGenerator(object):
         return outputs
 
     def is_train_label(self, x, y):
-        diff = (y - x + self.output_nodes) % self.output_nodes
-        return diff < self.output_nodes // 2
+        half = self.output_nodes // 2
+        if self.args.label_split == 'tile':
+            return x < half or y < half
+        elif self.args.label_split == 'diagonal':
+            diff = (y - x + self.output_nodes) % self.output_nodes
+            return diff < half
+        else:
+            assert False
 
     def get_input_shape(self):
         return self.input_shape
