@@ -131,9 +131,7 @@ class APYDataGenerator(ZeroShotDataGenerator):
         fn_y_test = y_folder + 'apascal_test.txt'
         train_label_matrix = self.get_label_matrix(fn_y_train)
         test_label_matrix = self.get_label_matrix(fn_y_test)
-        label_matrix = np.concatenate(
-            [train_label_matrix, test_label_matrix], 0)
-        combined_labels = self.get_combined_labels(label_matrix)
+        combined_labels = self.get_combined_labels(train_label_matrix)
         train_labels = self.get_labels(train_label_matrix, combined_labels)
         test_labels = self.get_labels(test_label_matrix, combined_labels)
         train_samples = self.load_data(fn_x_train, train_labels, True)
