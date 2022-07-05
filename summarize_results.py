@@ -94,7 +94,11 @@ def main():
         ['aPY', 'zeroshot_apy_diagonal_cnn_acc'],
         ['AwA2', 'zeroshot_awa2_diagonal_cnn_acc'],
         ['CUB', 'zeroshot_cub_diagonal_cnn_acc'],
-        ['SUN', 'zeroshot_sun_diagonal_cnn_acc']
+        ['SUN', 'zeroshot_sun_diagonal_cnn_acc'],
+        ['aPY tile', 'zeroshot_apy_tile_cnn_acc'],
+        ['AwA2 tile', 'zeroshot_awa2_tile_cnn_acc'],
+        ['CUB tile', 'zeroshot_cub_tile_cnn_acc'],
+        ['SUN tile', 'zeroshot_sun_tile_cnn_acc']
     ]
     names = [x[1] for x in all_names]
     exp_names = [x[0] for x in all_names]
