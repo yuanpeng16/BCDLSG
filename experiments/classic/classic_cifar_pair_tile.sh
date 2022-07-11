@@ -14,7 +14,7 @@ mkdir -p ${MYDIR}
 cp ${ABS_PATH} ${MYDIR}
 
 CUDA_VISIBLE_DEVICES=0 \
-python3 -u mnist.py \
+python3 -u main.py \
 --parameter_random_seed ${RANDOM_SEED} \
 --merge_type paired \
 --model_type cnn \

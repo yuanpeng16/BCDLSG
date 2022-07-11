@@ -20,7 +20,7 @@ mkdir -p ${MYDIR}
 cp ${ABS_PATH} ${MYDIR}
 
 CUDA_VISIBLE_DEVICES=${GPU_ID} \
-python3 -u mnist.py \
+python3 -u main.py \
 --parameter_random_seed ${RANDOM_SEED} \
 --merge_type zeroshot_awa2 \
 --model_type cnn \
