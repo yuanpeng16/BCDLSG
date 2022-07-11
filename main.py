@@ -119,7 +119,7 @@ if __name__ == '__main__':
     parser.add_argument('--model_type', type=str, default='cnn',
                         help='Model type.')
     parser.add_argument('--input_permutation', action='store_true',
-                        default=False, help='Permutate input.')
+                        default=False, help='Permute input.')
     parser.add_argument('--label_split', type=str, default='tile',
                         help='Model type.')
     parser.add_argument('--rotate_second_input', action='store_true',

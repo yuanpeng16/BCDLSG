@@ -154,7 +154,7 @@ class RandomDataGenerator(object):
     def get_output_nodes(self):
         return self.output_nodes
 
-    def _permutate(self, x):
+    def _permute(self, x):
         shape = x.shape
         x_flat = np.reshape(x, [-1])
         y_flat = [
@@ -175,7 +175,7 @@ class RandomDataGenerator(object):
         for y, y2 in label_list:
             x = self._merge(y, y2, samples1, samples2)
             if self.args.input_permutation:
-                x = self._permutate(x)
+                x = self._permute(x)
             x_list.append(x)
             y_list.append(one_hot(y, self.output_nodes))
             y2_list.append(one_hot(y2, self.output_nodes))
