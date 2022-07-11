@@ -34,7 +34,7 @@ class ZeroShotDataGenerator(object):
         self.input_shape = self.train_samples[0][0].shape
 
     def get_data(self):
-        raise NotImplementedError
+        raise NotImplementedError()
 
     def get_combined_labels(self, matrix):
         mean = np.mean(matrix, 0)
@@ -220,6 +220,9 @@ class PreprocessedDataGenerator(ZeroShotDataGenerator):
         feats = feats / 255.0
         ret = self.split_data(feats, labels)
         return ret
+
+    def load_labels(self, fn):
+        raise NotImplementedError()
 
 
 class CUBDataGenerator(PreprocessedDataGenerator):

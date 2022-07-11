@@ -10,6 +10,7 @@ class AbstractModelGenerator(object):
         self.input_shape = input_shape
         self.output_nodes = output_nodes
         self.depth = self.args.n_common_layers + self.args.n_separate_layers
+        self.vocab_size = 0
 
     def convert_input(self, x):
         return x

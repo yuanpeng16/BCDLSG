@@ -17,8 +17,8 @@ class AbstractDataPreprocessor(object):
                 im = im.convert('RGB')
 
             # Resize
-            mxlength = max(im.size[:2])
-            size = (np.asarray(im.size[:2]) * length) // mxlength
+            max_length = max(im.size[:2])
+            size = (np.asarray(im.size[:2]) * length) // max_length
             assert max(size) == length
             resized = im.resize(size, Image.ANTIALIAS)
 
@@ -40,6 +40,9 @@ class AbstractDataPreprocessor(object):
                       str(round((100 * i) / len(names), 2)) + '%')
         matrix = np.asarray(matrix)
         matrix.dump(fn_f)
+
+    def get_image_files(self, fn_z):
+        raise NotImplementedError()
 
 
 class CUBDataPreprocessor(AbstractDataPreprocessor):
@@ -76,7 +79,7 @@ class SUNDataPreprocessor(AbstractDataPreprocessor):
 
 
 def main(args):
-    if args.dataest == 'cub':
+    if args.dataset == 'cub':
         proc = CUBDataPreprocessor(args)
     else:
         proc = SUNDataPreprocessor(args)
@@ -85,7 +88,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataest', type=str, default='cub',
+    parser.add_argument('--dataset', type=str, default='cub',
                         help='Dataset.')
     parser.add_argument('--dataset_dir', type=str,
                         default='../../data/zeroshot_datasets/',

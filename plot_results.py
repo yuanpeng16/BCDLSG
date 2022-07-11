@@ -6,7 +6,7 @@ from matplotlib import rc
 
 
 def draw(args, lists, stds, legends, basedir, colors, lw, loc, labels, v_name,
-         u_name, plot=True, font_size = 24):
+         u_name, plot=True, font_size=24):
     x_lim = len(lists[0])
     directory = os.path.dirname(basedir)
     if not os.path.exists(directory):
@@ -206,6 +206,7 @@ def get_steps(args, path):
         length = -1
     else:
         length = args.plot_size + 1
+    steps = None
     for e in exp_ids:
         fn = os.path.join(path + e, "log.txt")
         eval1, eval2, eval3, eval4, steps = load(fn)

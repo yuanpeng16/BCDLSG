@@ -321,8 +321,8 @@ class TextDataGenerator(RandomDataGenerator):
         stat = {}
         for y in y_train:
             stat[y] = stat.get(y, 0) + 1
-        l = sorted(list(stat.items()), key=lambda x: x[1], reverse=True)
-        label_map = {x[0]: i for i, x in enumerate(l[:self.output_nodes])}
+        order = sorted(list(stat.items()), key=lambda x: x[1], reverse=True)
+        label_map = {x[0]: i for i, x in enumerate(order[:self.output_nodes])}
 
         x_train, y_train = self._filter(x_train, y_train, label_map)
         x_test, y_test = self._filter(x_test, y_test, label_map)

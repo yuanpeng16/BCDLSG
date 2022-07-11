@@ -3,3 +3,4 @@ tensorflow-model-optimization==0.7.2
 numpy
 matplotlib
 Pillow==5.1.0
+scipy==1.4.1
