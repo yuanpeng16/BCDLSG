@@ -16,7 +16,7 @@ class AbstractModelGenerator(object):
         return x
 
     def get_intermediate_layer(self, hn, x):
-        return x
+        raise NotImplementedError()
 
     def get_first_layer(self, hn, x):
         return self.get_intermediate_layer(hn, x)
