@@ -5,9 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib import rc
 
 
-def draw(args, lists, stds, legends, basedir, colors, lw, loc, labels, v_name,
-         u_name, plot=True, font_size=24):
-    x_lim = len(lists[0])
+def write_to_file(lists, stds, basedir):
     directory = os.path.dirname(basedir)
     if not os.path.exists(directory):
         os.makedirs(directory)
@@ -21,9 +19,10 @@ def draw(args, lists, stds, legends, basedir, colors, lw, loc, labels, v_name,
                 f.write('\t' + str(e[i]))
             f.write('\n')
 
-    if not plot:
-        return
 
+def draw_figure(args, lists, stds, legends, basedir, colors, lw, loc, labels,
+                v_name, u_name, font_size=24):
+    x_lim = len(lists[0])
     plt.figure(figsize=(9, 6))
     ax = plt.subplot(1, 1, 1)
     ax.tick_params(axis='both', which='major', labelsize=font_size)
@@ -47,15 +46,26 @@ def draw(args, lists, stds, legends, basedir, colors, lw, loc, labels, v_name,
 
     ax.set_xlim([0, x_lim - 1])
     ax.set_xticks(range(x_lim))
+    ax.set_xticklabels(labels)
+    ax.set_xlabel(u_name, fontsize=font_size)
+    ax.set_ylabel(v_name, fontsize=font_size)
+    ax.xaxis.labelpad = 5
+    ax.yaxis.labelpad = 5
+
     if args.show_legend:
         legend_font_size = font_size
         ax.legend(loc=loc, prop={'size': legend_font_size})
-    ax.set_xlabel(u_name, fontsize=font_size)
-    ax.set_ylabel(v_name, fontsize=font_size)
-    ax.set_xticklabels(labels)
-    ax.xaxis.labelpad = 5
-    ax.yaxis.labelpad = 5
+
     plt.savefig(basedir + '.pdf', bbox_inches='tight', pad_inches=0.01)
+
+
+def write_draw(args, lists, stds, legends, basedir, colors, lw, loc, labels,
+               v_name, u_name, plot=True, font_size=24):
+    write_to_file(lists, stds, basedir)
+
+    if plot:
+        draw_figure(args, lists, stds, legends, basedir, colors, lw, loc,
+                    labels, v_name, u_name, font_size=font_size)
 
 
 def get_list(lines, key):
@@ -85,6 +95,47 @@ def load(fn, steps=False):
     return eval_list, steps
 
 
+def get_params(args):
+    if args.experiment_id == 'main_resnet':
+        depth = 5
+    elif args.experiment_id == 'main_lstm_shallow':
+        depth = 2
+    else:
+        depth = 7
+
+    ids = [str(i) + '_' + str(depth - i) for i in range(depth + 1)]
+    labels = [str(i) + '-' + str(depth - i) for i in range(depth + 1)]
+    eid = args.experiment_id + '_'
+    log_dir = os.path.join('logs', args.experiment_id)
+    file_list = [os.path.join(log_dir, eid + c + '_') for c in ids]
+    lw = 2
+    loc = 'upper right'
+
+    if args.experiment_type == 'main':
+        pairs = [
+            ('Eval Sample Acc.', ('b', 'v')),
+            ('Test Sample Acc.', ('c', '^')),
+            ('Test Set Acc.', ('r', 's')),
+            ('Rnd. Set Acc.', ('brown', 'D')),
+        ]
+        out_name = eid + 'acc'
+    elif args.experiment_type == 'steps':
+        pairs = [
+            ('OOD Area', ('b', '')),
+            ('Random Area', ('r', '')),
+        ]
+        out_name = eid + 'steps_acc'
+    else:
+        print(args.experiment_type + " is not defined.")
+        assert False
+
+    legends = [x[0] for x in pairs]
+    colors = [x[1] for x in pairs]
+    output_name = os.path.join('outputs', args.experiment_id, out_name)
+
+    return file_list, legends, output_name, colors, lw, loc, labels
+
+
 def get_results(args, path):
     if args.first_experiment:
         exp_ids = ['1']
@@ -108,64 +159,8 @@ def get_results(args, path):
     return means, stds
 
 
-def get_params(args):
-    if args.experiment_id == 'main_resnet':
-        depth = 5
-    elif args.experiment_id == 'main_lstm_shallow':
-        depth = 2
-    else:
-        depth = 7
-
-    if args.experiment_type == 'main':
-        pairs = [
-            ('Eval Sample Acc.', ('b', 'v')),
-            ('Test Sample Acc.', ('c', '^')),
-            ('Test Set Acc.', ('r', 's')),
-            ('Rnd. Set Acc.', ('brown', 'D')),
-        ]
-        ids = [
-            str(i) + '_' + str(depth - i) for i in range(depth + 1)]
-        labels = [
-            str(i) + '-' + str(depth - i) for i in range(depth + 1)]
-        eid = args.experiment_id + '_'
-        log_dir = 'logs/' + args.experiment_id + '/'
-        file_list = [log_dir + eid + c + '_' for c in ids]
-        legends = [x[0] for x in pairs]
-        colors = [x[1] for x in pairs]
-        out_name = eid + 'acc'
-        output_list = [
-            'outputs/' + args.experiment_id + '/' + out_name
-        ]
-        lw = 2
-        loc = 'upper right'
-    elif args.experiment_type == 'steps':
-        pairs = [
-            ('OOD Area', ('b', '')),
-            ('Random Area', ('r', '')),
-        ]
-        ids = [
-            str(i) + '_' + str(depth - i) for i in range(depth + 1)]
-        labels = [
-            str(i) + '-' + str(depth - i) for i in range(depth + 1)]
-        eid = args.experiment_id + '_'
-        log_dir = 'logs/' + args.experiment_id + '/'
-        file_list = [log_dir + eid + c + '_' for c in ids]
-        legends = [x[0] for x in pairs]
-        colors = [x[1] for x in pairs]
-        out_name = eid + 'acc'
-        output_list = [
-            'outputs/' + args.experiment_id + '/' + out_name + '_steps'
-        ]
-        lw = 2
-        loc = 'upper right'
-    else:
-        print(args.experiment_type + " is not defined.")
-        assert False
-    return file_list, legends, output_list, colors, lw, loc, labels
-
-
 def final_main(args):
-    file_list, legends, output_list, colors, lw, loc, labels = get_params(args)
+    file_list, legends, output_name, colors, lw, loc, labels = get_params(args)
     eval_lists = [[], [], [], []]
     std_lists = [[], [], [], []]
 
@@ -183,11 +178,11 @@ def final_main(args):
     acc_mean = eval_lists[1:]
     acc_std = std_lists[1:]
     legends = legends[1:]
-    draw(args, acc_mean, acc_std, legends, output_list[0], colors, lw, loc,
-         labels, 'Accuracy (%)', 'Shared-Individual Layer Depths')
+    write_draw(args, acc_mean, acc_std, legends, output_name, colors, lw,
+               loc, labels, 'Accuracy (%)', 'Shared-Individual Layer Depths')
 
 
-def get_steps(args, path):
+def get_step_results(args, path):
     if args.first_experiment:
         exp_ids = ['1']
     else:
@@ -220,17 +215,15 @@ def get_steps(args, path):
 
 
 def step_main(args):
-    file_list, legends, output_list, colors, lw, loc, labels = get_params(args)
+    file_list, legends, output_name, colors, lw, loc, labels = get_params(args)
 
     fn = file_list[-1]
-    means, stds, steps = get_steps(args, fn)
-    eval1, eval2, eval3, eval4 = means
-    std1, std2, std3, std4 = stds
+    means, stds, steps = get_step_results(args, fn)
 
-    acc_mean = [eval3, eval4]
-    acc_std = [std3, std4]
-    draw(args, acc_mean, acc_std, legends, output_list[0], colors, lw, loc,
-         steps, 'Accuracy (%)', 'Training Steps')
+    acc_mean = means[2:]
+    acc_std = stds[2:]
+    write_draw(args, acc_mean, acc_std, legends, output_name, colors, lw,
+               loc, steps, 'Accuracy (%)', 'Training Steps')
 
 
 def main(args):
