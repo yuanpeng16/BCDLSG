@@ -79,16 +79,10 @@ def load(fn, steps=False):
         lines = [x.strip().split(' ') for x in lines]
         index = [3, 8, 9, 14]
         steps = get_list_index(lines)
-        eval1 = get_list(lines, index[0])
-        eval2 = get_list(lines, index[1])
-        eval3 = get_list(lines, index[2])
-        eval4 = get_list(lines, index[3])
+        eval_list = [get_list(lines, i) for i in index]
     else:
-        eval1 = []
-        eval2 = []
-        eval3 = []
-        eval4 = []
-    return eval1, eval2, eval3, eval4, steps
+        eval_list = [[], [], [], []]
+    return eval_list, steps
 
 
 def get_results(args, path):
@@ -99,11 +93,10 @@ def get_results(args, path):
     results = [[], [], [], []]
     for e in exp_ids:
         fn = os.path.join(path + e, "log.txt")
-        eval1, eval2, eval3, eval4, _ = load(fn)
-        results[0].append(eval1[-1])
-        results[1].append(eval2[-1])
-        results[2].append(eval3[-1])
-        results[3].append(eval4[-1])
+        eval_list, _ = load(fn)
+        assert len(results) == len(eval_list)
+        for result, evaluation in zip(results, eval_list):
+            result.append(evaluation[-1])
 
     means = []
     stds = []
@@ -173,33 +166,22 @@ def get_params(args):
 
 def final_main(args):
     file_list, legends, output_list, colors, lw, loc, labels = get_params(args)
-    eval1_list = []
-    eval2_list = []
-    eval3_list = []
-    eval4_list = []
-    std1_list = []
-    std2_list = []
-    std3_list = []
-    std4_list = []
+    eval_lists = [[], [], [], []]
+    std_lists = [[], [], [], []]
+
     for fn in file_list:
         means, stds = get_results(args, fn)
-        eval1, eval2, eval3, eval4 = means
-        std1, std2, std3, std4 = stds
 
-        eval1_list.append(eval1)
-        eval2_list.append(eval2)
-        eval3_list.append(eval3)
-        eval4_list.append(eval4)
-        std1_list.append(std1)
-        std2_list.append(std2)
-        std3_list.append(std3)
-        std4_list.append(std4)
+        assert len(eval_lists) == len(means)
+        for eval_list, mean in zip(eval_lists, means):
+            eval_list.append(mean)
 
-    font = {'family': 'serif'}
-    rc('font', **font)
+        assert len(std_lists) == len(stds)
+        for std_list, std in zip(std_lists, stds):
+            std_list.append(std)
 
-    acc_mean = [eval2_list, eval3_list, eval4_list]
-    acc_std = [std2_list, std3_list, std4_list]
+    acc_mean = eval_lists[1:]
+    acc_std = std_lists[1:]
     legends = legends[1:]
     draw(args, acc_mean, acc_std, legends, output_list[0], colors, lw, loc,
          labels, 'Accuracy (%)', 'Shared-Individual Layer Depths')
@@ -218,11 +200,10 @@ def get_steps(args, path):
     steps = None
     for e in exp_ids:
         fn = os.path.join(path + e, "log.txt")
-        eval1, eval2, eval3, eval4, steps = load(fn)
-        results[0].append(eval1[:length])
-        results[1].append(eval2[:length])
-        results[2].append(eval3[:length])
-        results[3].append(eval4[:length])
+        eval_list, steps = load(fn)
+        assert len(results) == len(eval_list)
+        for result, evaluation in zip(results, eval_list):
+            result.append((evaluation[:length]))
     steps = steps[:length]
     for i in range(len(steps)):
         if i % 10 != 0:
@@ -246,9 +227,6 @@ def step_main(args):
     eval1, eval2, eval3, eval4 = means
     std1, std2, std3, std4 = stds
 
-    font = {'family': 'serif'}
-    rc('font', **font)
-
     acc_mean = [eval3, eval4]
     acc_std = [std3, std4]
     draw(args, acc_mean, acc_std, legends, output_list[0], colors, lw, loc,
@@ -256,6 +234,9 @@ def step_main(args):
 
 
 def main(args):
+    font = {'family': 'serif'}
+    rc('font', **font)
+
     if args.experiment_type == 'main':
         final_main(args)
     else:
@@ -271,13 +252,9 @@ if __name__ == '__main__':
                         help='Experiment type.')
     parser.add_argument('--plot_size', type=int, default=-1,
                         help='Number of horizontal points to plot.')
-    parser.add_argument('--analysis', action='store_true', default=False,
-                        help='Analysis.')
     parser.add_argument('--first_experiment', action='store_true',
                         default=False,
                         help='Visualize first experiment.')
     parser.add_argument('--show_legend', action='store_true',
                         default=False, help='Show legend.')
-    parser.add_argument('--random_threshold', type=str, default='75',
-                        help='Threshold to randomize the second input.')
     main(parser.parse_args())
