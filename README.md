@@ -1,4 +1,4 @@
-# Gradient Descent Resists Compositionality
+# On a Built-in Conflict between Deep Learning and Systematic Generalization
 
 ## Experiments
     #DNN
@@ -37,3 +37,6 @@ Please download data and put to corresponding folder.
     # Preprocess
     python3 preprocess_data.py --dataest cub
     python3 preprocess_data.py --dataest sun
+
+## Visualized examples
+Please visit https://gitee.com/yuanpeng16/multilabel_playground
