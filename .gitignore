@@ -1,5 +1,5 @@
 .idea
 __pycache__
-logs*
+logs
 outputs
 experiments/sanity_check

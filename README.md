@@ -1,42 +1,42 @@
 # On a Built-in Conflict between Deep Learning and Systematic Generalization
 
-## Experiments
-    #DNN
-    sh experiments/batch/fashion_mnist_added_diagonal.sh
-    # LSTM horizontal
-    sh experiments/batch/reuters_reuters_diagonal_lstm_horizontal.sh
+## Main experiments
 
-## Additional experiments
-#### Equally difficult factors
-    # DNN
-    sh experiments/batch/fashion_fashion_added_diagonal_dnn.sh
-    # CNN
-    sh experiments/batch/fashion_fashion_added_diagonal_cnn.sh
+    # Scripts in scripts/main
+    sh scripts/batch.sh scripts/main/main_dnn.sh
 
-#### Label combinations
-    # Tile
-    sh experiments/batch/fashion_mnist_added_tile.sh
-    # One-shot
-    sh experiments/batch/fashion_mnist_added_oneshot.sh
+## More experiments
 
-## Plot results
-    # DNN and others
-    python3 plot_results.py --experiment_id fashion_mnist_added_diagonal --show_legend
-    # ResNet
-    python3 plot_results.py --experiment_id cifar_fashion_added_diagonal_resnet --depth 5
-    # LSTM horizontal
-    python3 plot_results.py --experiment_id reuters_reuters_diagonal_lstm_horizontal --depth 2
+### Zero-shot learning
 
-## Plot training process
-    python3 plot_results.py --experiment_id fashion_mnist_added_diagonal_dnn_early --experiment_type steps --show_legend
-    python3 plot_results.py --experiment_id cifar_fashion_added_diagonal_cnn_early --experiment_type steps
-
-## Zero-shot learning
 Please download data and put to corresponding folder.
 
     # Preprocess
     python3 preprocess_data.py --dataest cub
     python3 preprocess_data.py --dataest sun
 
+    # Experiments
+    # Scripts in scripts/zeroshot
+    sh scripts/batch.sh scripts/zeroshot/zeroshot_apy.sh
+
+### Equally difficult factors
+
+    # Scripts in scripts/equal
+    sh scripts/batch.sh scripts/equal/equal_dnn.sh
+
+### Label combinations
+
+    # Scripts in scripts/label
+    sh scripts/batch.sh scripts/label/label_tile.sh
+
+## Plot results
+
+    python3 plot_results.py --experiment_id main_dnn --show_legend
+
+## Plot training process
+
+    python3 plot_results.py --experiment_id main_dnn --experiment_type steps --show_legend
+
 ## Visualized examples
+
 Please visit https://gitee.com/yuanpeng16/multilabel_playground

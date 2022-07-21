@@ -80,31 +80,27 @@ def dump_vertical(matrix, exp_names):
 
 def main():
     all_names = [
-        ['DNN', 'fashion_mnist_added_diagonal_acc'],
-        ['CNN', 'cifar_fashion_added_diagonal_acc'],
-        ['ResNet', 'cifar_fashion_added_diagonal_resnet_acc'],
-        ['ViT', 'cifar_fashion_added_diagonal_vit_acc'],
-        ['LSTM', 'reuters_reuters_diagonal_lstm_acc'],
-        ['Transformer', 'reuters_reuters_diagonal_transformer_acc'],
-        ['hLSTM', 'reuters_reuters_diagonal_lstm_horizontal_acc'],
-        ['DNN', 'fashion_fashion_added_diagonal_dnn_acc'],
-        ['CNN', 'fashion_fashion_added_diagonal_cnn_acc'],
-        ['Tile', 'fashion_mnist_added_tile_acc'],
-        ['Oneshot', 'fashion_mnist_added_oneshot_acc'],
-        ['aPY', 'zeroshot_apy_diagonal_cnn_acc'],
-        ['AwA2', 'zeroshot_awa2_diagonal_cnn_acc'],
-        ['CUB', 'zeroshot_cub_diagonal_cnn_acc'],
-        ['SUN', 'zeroshot_sun_diagonal_cnn_acc'],
-        ['aPY tile', 'zeroshot_apy_tile_cnn_acc'],
-        ['AwA2 tile', 'zeroshot_awa2_tile_cnn_acc'],
-        ['CUB tile', 'zeroshot_cub_tile_cnn_acc'],
-        ['SUN tile', 'zeroshot_sun_tile_cnn_acc']
+        ['DNN', 'main_dnn'],
+        ['CNN', 'main_cnn'],
+        ['ResNet', 'main_resnet'],
+        ['ViT', 'main_vit'],
+        ['LSTM', 'main_lstm'],
+        ['LSTM-1', 'main_lstm_shallow'],
+        ['Transformer', 'main_transformer'],
+        ['aPY', 'zeroshot_apy'],
+        ['AwA2', 'zeroshot_awa2'],
+        ['CUB', 'zeroshot_cub'],
+        ['SUN', 'zeroshot_sun'],
+        ['DNN', 'equal_dnn'],
+        ['CNN', 'equal_cnn'],
+        ['Tile', 'label_tile'],
+        ['Oneshot', 'label_oneshot'],
     ]
     names = [x[1] for x in all_names]
     exp_names = [x[0] for x in all_names]
     terms = []
     for name in names:
-        fn = os.path.join('outputs', name, name + '.txt')
+        fn = os.path.join('outputs', name, name + '_acc.txt')
         terms.append(load(fn))
     matrix = np.asarray(terms)
 
@@ -114,3 +110,10 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+# temp = [
+#    ['aPY tile', 'zeroshot_apy_tile_cnn_acc'],
+#    ['AwA2 tile', 'zeroshot_awa2_tile_cnn_acc'],
+#    ['CUB tile', 'zeroshot_cub_tile_cnn_acc'],
+#    ['SUN tile', 'zeroshot_sun_tile_cnn_acc']
+# ]

@@ -116,6 +116,13 @@ def get_results(args, path):
 
 
 def get_params(args):
+    if args.experiment_id == 'main_resnet':
+        depth = 5
+    elif args.experiment_id == 'main_lstm_shallow':
+        depth = 2
+    else:
+        depth = 7
+
     if args.experiment_type == 'main':
         pairs = [
             ('Eval Sample Acc.', ('b', 'v')),
@@ -124,16 +131,17 @@ def get_params(args):
             ('Rnd. Set Acc.', ('brown', 'D')),
         ]
         ids = [
-            str(i) + '_' + str(args.depth - i) for i in range(args.depth + 1)]
+            str(i) + '_' + str(depth - i) for i in range(depth + 1)]
         labels = [
-            str(i) + '-' + str(args.depth - i) for i in range(args.depth + 1)]
+            str(i) + '-' + str(depth - i) for i in range(depth + 1)]
         eid = args.experiment_id + '_'
-        file_list = ['logs/' + eid + c + '_' for c in ids]
+        log_dir = 'logs/' + args.experiment_id + '/'
+        file_list = [log_dir + eid + c + '_' for c in ids]
         legends = [x[0] for x in pairs]
         colors = [x[1] for x in pairs]
         out_name = eid + 'acc'
         output_list = [
-            'outputs/' + out_name + '/' + out_name
+            'outputs/' + args.experiment_id + '/' + out_name
         ]
         lw = 2
         loc = 'upper right'
@@ -143,16 +151,17 @@ def get_params(args):
             ('Random Area', ('r', '')),
         ]
         ids = [
-            str(i) + '_' + str(args.depth - i) for i in range(args.depth + 1)]
+            str(i) + '_' + str(depth - i) for i in range(depth + 1)]
         labels = [
-            str(i) + '-' + str(args.depth - i) for i in range(args.depth + 1)]
+            str(i) + '-' + str(depth - i) for i in range(depth + 1)]
         eid = args.experiment_id + '_'
-        file_list = ['logs/' + eid + c + '_' for c in ids]
+        log_dir = 'logs/' + args.experiment_id + '/'
+        file_list = [log_dir + eid + c + '_' for c in ids]
         legends = [x[0] for x in pairs]
         colors = [x[1] for x in pairs]
         out_name = eid + 'acc'
         output_list = [
-            'outputs/' + out_name + '/' + out_name + '_steps'
+            'outputs/' + args.experiment_id + '/' + out_name + '_steps'
         ]
         lw = 2
         loc = 'upper right'
@@ -260,8 +269,6 @@ if __name__ == '__main__':
     parser.add_argument('--experiment_id', type=str,
                         default='fashion_mnist_added_diagonal',
                         help='Experiment type.')
-    parser.add_argument('--depth', type=int, default=7,
-                        help='Depth of the network.')
     parser.add_argument('--plot_size', type=int, default=-1,
                         help='Number of horizontal points to plot.')
     parser.add_argument('--analysis', action='store_true', default=False,
