@@ -33,7 +33,7 @@ fi
 
 ID=$(basename "${MY_SCRIPT}" | sed "s/.sh$//g")
 ABS_PATH=$(readlink -f "${MY_SCRIPT}")
-cd "$(dirname "$(dirname "$(dirname"${ABS_PATH}")")")" || exit
+cd "$(dirname "$(dirname "$(dirname "${ABS_PATH}")")")" || exit
 
 MY_DIR="logs/${ID}/${ID}_${N_COMMON_LAYERS}_${N_SEPARATE_LAYERS}_${RANDOM_SEED}"
 mkdir -p "${MY_DIR}"
