@@ -24,7 +24,5 @@ echo \
   --n_hidden_nodes 64 \
   --n_common_layers "${N_COMMON_LAYERS}" \
   --n_separate_layers "${N_SEPARATE_LAYERS}" \
-  --dataset1 cifar10 \
-  --dataset2 fashion_mnist \
   --label_split diagonal \
   --log_dir "${MY_DIR}"
