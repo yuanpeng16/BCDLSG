@@ -2,7 +2,7 @@
 if [ $# -gt 0 ]; then
   SCRIPT=$1
 else
-  echo Script is not given
+  echo Script is not given.
   exit
 fi
 

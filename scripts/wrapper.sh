@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 
 if [ $# -gt 0 ]; then
-  MY_SCRIPT=$1
+  SCRIPT=$1
 else
-  echo Needs script.
+  echo Script is not given.
   exit
 fi
 
@@ -31,16 +31,16 @@ else
   GPU_ID=0
 fi
 
-ID=$(basename "${MY_SCRIPT}" | sed "s/.sh$//g")
-ABS_PATH=$(readlink -f "${MY_SCRIPT}")
+ID=$(basename "${SCRIPT}" | sed "s/.sh$//g")
+ABS_PATH=$(readlink -f "${SCRIPT}")
 cd "$(dirname "$(dirname "$(dirname "${ABS_PATH}")")")" || exit
 
-MY_DIR="logs/${ID}/${ID}_${N_COMMON_LAYERS}_${N_SEPARATE_LAYERS}_${RANDOM_SEED}"
-mkdir -p "${MY_DIR}"
-cp "${ABS_PATH}" "${MY_DIR}"
+LOG_DIR="logs/${ID}/${ID}_${N_COMMON_LAYERS}_${N_SEPARATE_LAYERS}_${RANDOM_SEED}"
+mkdir -p "${LOG_DIR}"
+cp "${ABS_PATH}" "${LOG_DIR}"
 
-command=$(sh "${MY_SCRIPT}" \
-  "${MY_DIR}" \
+command=$(sh "${SCRIPT}" \
+  "${LOG_DIR}" \
   "${N_COMMON_LAYERS}" \
   "${N_SEPARATE_LAYERS}" \
   "${RANDOM_SEED}" \
@@ -49,8 +49,8 @@ command=$(sh "${MY_SCRIPT}" \
 echo "${command}" |
   sed 's/python/\\\n  python/g' |
   sed 's/--/\\\n  --/g' |
-  tee "${MY_DIR}"/command.txt
+  tee "${LOG_DIR}"/command.txt
 
-date >"${MY_DIR}"/time.txt
-eval "${command}" | tee "${MY_DIR}"/log.txt
-date >>"${MY_DIR}"/time.txt
+date >"${LOG_DIR}"/time.txt
+eval "${command}" | tee "${LOG_DIR}"/log.txt
+date >>"${LOG_DIR}"/time.txt
