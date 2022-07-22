@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ $# = 5 ]; then
-  MY_DIR=$1
+  LOG_DIR=$1
   N_COMMON_LAYERS=$2
   N_SEPARATE_LAYERS=$3
   RANDOM_SEED=$4
@@ -28,4 +28,4 @@ echo \
   --dataset2 fashion_mnist \
   --label_split diagonal \
   --rotate_second_input \
-  --log_dir "${MY_DIR}"
+  --log_dir "${LOG_DIR}"

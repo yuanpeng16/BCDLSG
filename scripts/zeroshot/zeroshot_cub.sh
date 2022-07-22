@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ $# = 5 ]; then
-  MY_DIR=$1
+  LOG_DIR=$1
   N_COMMON_LAYERS=$2
   N_SEPARATE_LAYERS=$3
   RANDOM_SEED=$4
@@ -25,4 +25,4 @@ echo \
   --n_common_layers "${N_COMMON_LAYERS}" \
   --n_separate_layers "${N_SEPARATE_LAYERS}" \
   --label_split diagonal \
-  --log_dir "${MY_DIR}"
+  --log_dir "${LOG_DIR}"
