@@ -85,7 +85,7 @@ def main():
         ['ResNet', 'main_resnet'],
         ['ViT', 'main_vit'],
         ['LSTM', 'main_lstm'],
-        ['LSTM-1', 'main_lstm_shallow'],
+        ['LSTM-1', 'main_lstm-1'],
         ['Transformer', 'main_transformer'],
         ['aPY', 'zeroshot_apy'],
         ['AwA2', 'zeroshot_awa2'],
