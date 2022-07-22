@@ -15,7 +15,7 @@ fi
 ID=$(basename "${SCRIPT}" | sed "s/.sh$//g")
 if [ "${ID}" = main_resnet ]; then
   DEPTH=5
-elif [ "${ID}" = main_lstm_shallow ]; then
+elif [ "${ID}" = main_lstm-1 ]; then
   DEPTH=2
 else
   DEPTH=7

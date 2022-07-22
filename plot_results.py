@@ -98,7 +98,7 @@ def load(fn, steps=False):
 def get_params(args):
     if args.experiment_id == 'main_resnet':
         depth = 5
-    elif args.experiment_id == 'main_lstm_shallow':
+    elif args.experiment_id == 'main_lstm-1':
         depth = 2
     else:
         depth = 7
