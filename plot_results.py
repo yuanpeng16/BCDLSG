@@ -241,7 +241,7 @@ if __name__ == '__main__':
     parser.add_argument('--experiment_type', type=str, default='main',
                         help='Experiment type.')
     parser.add_argument('--experiment_id', type=str,
-                        default='fashion_mnist_added_diagonal',
+                        default='main_dnn',
                         help='Experiment type.')
     parser.add_argument('--plot_size', type=int, default=-1,
                         help='Number of horizontal points to plot.')
