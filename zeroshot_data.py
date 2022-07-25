@@ -66,7 +66,8 @@ class ZeroShotDataGenerator(object):
             diff = (y - x + self.output_nodes) % self.output_nodes
             return diff < half
         else:
-            assert False
+            raise ValueError('{0} is not a valid label_split.'.format(
+                self.args.label_split))
 
     def get_input_shape(self):
         return self.input_shape

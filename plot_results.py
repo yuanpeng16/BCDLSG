@@ -126,8 +126,8 @@ def get_params(args):
         ]
         out_name = eid + 'steps_acc'
     else:
-        print(args.experiment_type + " is not defined.")
-        assert False
+        raise ValueError(
+            '{0} is not a valid experiment_type.'.format(args.experiment_type))
 
     legends = [x[0] for x in pairs]
     colors = [x[1] for x in pairs]

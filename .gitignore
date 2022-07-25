@@ -3,3 +3,4 @@ __pycache__
 logs
 outputs
 experiments/sanity_check
+scripts/sanity

@@ -20,7 +20,8 @@ def get_model_generator(args, input_shape, output_nodes):
     elif args.model_type == 'transformer':
         model = TransformerGenerator(args, input_shape, output_nodes)
     else:
-        assert False
+        raise ValueError(
+            '{0} is not a valid model_type.'.format(args.model_type))
     return model
 
 
@@ -56,4 +57,3 @@ class LSTMModelGenerator(AbstractModelGenerator):
     def get_last_layer(self, hn, x):
         x = self.get_intermediate_layer(hn, x)
         return tf.keras.layers.Flatten()(x)
-

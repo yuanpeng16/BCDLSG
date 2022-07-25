@@ -31,7 +31,8 @@ def get_data_generator(args):
     elif args.merge_type == 'zeroshot_sun':
         dg = SUNDataGenerator(args)
     else:
-        assert False
+        raise ValueError(
+            '{0} is not a valid merge_type.'.format(args.merge_type))
     return dg
 
 
@@ -77,7 +78,7 @@ class RandomDataGenerator(object):
         elif data_name == 'fashion_mnist':
             dataset = tf.keras.datasets.fashion_mnist
         else:
-            assert False
+            raise ValueError('{0} is not a valid data_name.'.format(data_name))
 
         (x_train, y_train), (x_test, y_test) = dataset.load_data()
         if len(x_train.shape) == 3:
@@ -138,7 +139,8 @@ class RandomDataGenerator(object):
             return x < 9 or y < 1
         elif self.args.label_split == 'many_label':
             return x < 5 or y < 1
-        assert False
+        raise ValueError(
+            '{0} is not a valid label_split.'.format(self.args.label_split))
 
     def get_label_splits(self):
         for i in range(self.output_nodes):
@@ -334,7 +336,7 @@ class TextDataGenerator(RandomDataGenerator):
         elif data_name == 'reuters':
             dataset = tf.keras.datasets.reuters
         else:
-            assert False
+            raise ValueError('{0} is not a valid data_name.'.format(data_name))
 
         (x_train, y_train), (x_test, y_test) = dataset.load_data(maxlen=maxlen)
         if data_name == 'reuters':
@@ -365,7 +367,8 @@ class TextDataGenerator(RandomDataGenerator):
             return x < 1 or y < 1
         elif self.args.label_split == 'diagonal':
             return x != y
-        assert False
+        raise ValueError(
+            '{0} is not a valid label_split.'.format(self.args.merge_type))
 
     def get_vocab_size(self):
         # Dedicated method for text data.

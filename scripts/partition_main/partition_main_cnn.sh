@@ -11,8 +11,7 @@ N_COMMON_LAYERS=7
 N_SEPARATE_LAYERS=0
 RANDOM_SEED=1
 
-echo \
-  CUDA_VISIBLE_DEVICES="${GPU_ID}" \
+CUDA_VISIBLE_DEVICES="${GPU_ID}" \
   python3 -u main.py \
   --parameter_random_seed "${RANDOM_SEED}" \
   --data_random_seed "${RANDOM_SEED}" \
