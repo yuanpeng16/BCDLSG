@@ -13,6 +13,12 @@ from model import get_model_generator
 from evaluator import get_evaluator
 
 
+def set_random_seeds(parameter_random_seed, data_random_seed):
+    random.seed(data_random_seed)
+    np.random.seed(data_random_seed)
+    tf.random.set_seed(parameter_random_seed)
+
+
 def save_image(x, path):
     x = np.squeeze(x)
     x = np.minimum(np.maximum(x + 0.5, 0), 1)
@@ -30,11 +36,8 @@ def train(args, dg, model, ev, pretrain=False):
 
 
 def main(args):
-    # set random seeds
-    random.seed(args.data_random_seed)
-    tf.random.set_seed(args.parameter_random_seed)
-
-    # get data
+    # get data (fix test data)
+    set_random_seeds(42, 43)
     dg = get_data_generator(args)
     eval_data = dg.get_eval_samples(args.test_sample_size)
     test_data = dg.get_test_samples(args.test_sample_size, randomize=False)
@@ -45,13 +48,16 @@ def main(args):
     large_random_data = dg.get_test_samples(10 * args.test_sample_size,
                                             randomize=True)
 
+    # set random seeds
+    set_random_seeds(args.parameter_random_seed, args.data_random_seed)
+
     if args.save_image:
         for i in range(5):
-            save_image(eval_data[0][i],
+            save_image(large_eval_data[0][i],
                        os.path.join(args.log_dir, 'eval_' + str(i) + '.png'))
-            save_image(test_data[0][i],
+            save_image(large_test_data[0][i],
                        os.path.join(args.log_dir, 'test_' + str(i) + '.png'))
-            save_image(random_data[0][i],
+            save_image(large_random_data[0][i],
                        os.path.join(args.log_dir, 'random_' + str(i) + '.png'))
 
     # get model and evaluator

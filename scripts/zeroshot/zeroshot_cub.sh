@@ -15,6 +15,7 @@ echo \
   CUDA_VISIBLE_DEVICES="${GPU_ID}" \
   python3 -u main.py \
   --parameter_random_seed "${RANDOM_SEED}" \
+  --data_random_seed "${RANDOM_SEED}" \
   --merge_type zeroshot_cub \
   --model_type cnn \
   --log_interval 100 \
