@@ -81,15 +81,16 @@ class SUNDataPreprocessor(AbstractDataPreprocessor):
 def main(args):
     if args.dataset == 'cub':
         proc = CUBDataPreprocessor(args)
-    else:
+    elif args.dataset == 'sun':
         proc = SUNDataPreprocessor(args)
+    else:
+        raise ValueError('{0} is not a valid dataset.'.format(args.dataset))
     proc.convert()
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='cub',
-                        help='Dataset.')
+    parser.add_argument('--dataset', type=str, default='cub', help='Dataset.')
     parser.add_argument('--dataset_dir', type=str,
                         default='../../data/zeroshot_datasets/',
                         help='Dataset directory.')
