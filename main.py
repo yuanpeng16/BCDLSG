@@ -53,11 +53,11 @@ def main(args):
 
     if args.save_image:
         for i in range(5):
-            save_image(large_eval_data[0][i],
+            save_image(eval_data[0][i],
                        os.path.join(args.log_dir, 'eval_' + str(i) + '.png'))
-            save_image(large_test_data[0][i],
+            save_image(test_data[0][i],
                        os.path.join(args.log_dir, 'test_' + str(i) + '.png'))
-            save_image(large_random_data[0][i],
+            save_image(random_data[0][i],
                        os.path.join(args.log_dir, 'random_' + str(i) + '.png'))
 
     # get model and evaluator
