@@ -1,5 +1,6 @@
 import scipy.io
 import numpy as np
+import os
 
 
 def get_label(weights, x):
@@ -123,13 +124,13 @@ class ZeroShotDataGenerator(object):
 
 class APYDataGenerator(ZeroShotDataGenerator):
     def get_data(self):
-        path = self.dataset_dir + 'apy/'
-        x_folder = path + 'attribute_features/'
-        y_folder = path + 'attribute_data/'
-        fn_x_train = x_folder + 'feat_apascal_train.mat'
-        fn_y_train = y_folder + 'apascal_train.txt'
-        fn_x_test = x_folder + 'feat_apascal_test.mat'
-        fn_y_test = y_folder + 'apascal_test.txt'
+        path = os.path.join(self.dataset_dir, 'apy')
+        x_folder = os.path.join(path, 'attribute_features')
+        y_folder = os.path.join(path, 'attribute_data')
+        fn_x_train = os.path.join(x_folder, 'feat_apascal_train.mat')
+        fn_y_train = os.path.join(y_folder, 'apascal_train.txt')
+        fn_x_test = os.path.join(x_folder, 'feat_apascal_test.mat')
+        fn_y_test = os.path.join(y_folder, 'apascal_test.txt')
         train_label_matrix = self.get_label_matrix(fn_y_train)
         test_label_matrix = self.get_label_matrix(fn_y_test)
         label_matrix = np.concatenate(
@@ -147,8 +148,6 @@ class APYDataGenerator(ZeroShotDataGenerator):
         matrix = feat.toarray()
         matrix = np.transpose(matrix)
         data = np.reshape(matrix, [-1, 7, 7, 199])
-        #data = np.reshape(matrix, [-1, 199, 7, 7])
-        #data = np.transpose(data, [0, 2, 3, 1])
         return data
 
     def get_label_matrix(self, fn):
@@ -177,12 +176,13 @@ class APYDataGenerator(ZeroShotDataGenerator):
 
 class AWA2DataGenerator(ZeroShotDataGenerator):
     def get_data(self):
-        path = self.dataset_dir + 'awa2/'
-        x_folder = path + 'AwA2-features/Animals_with_Attributes2/Features/ResNet101/'
-        y_folder = path + 'AwA2-base/Animals_with_Attributes2/'
-        fn_x_train = x_folder + 'AwA2-features.txt'
-        fn_z_train = x_folder + 'AwA2-labels.txt'
-        fn_y_train = y_folder + 'predicate-matrix-binary.txt'
+        path = os.path.join(self.dataset_dir, 'awa2')
+        x_folder = os.path.join(
+            path, 'AwA2-features/Animals_with_Attributes2/Features/ResNet101')
+        y_folder = os.path.join(path, 'AwA2-base/Animals_with_Attributes2')
+        fn_x_train = os.path.join(x_folder, 'AwA2-features.txt')
+        fn_z_train = os.path.join(x_folder, 'AwA2-labels.txt')
+        fn_y_train = os.path.join(y_folder, 'predicate-matrix-binary.txt')
         return self.load_data(fn_x_train, fn_z_train, fn_y_train)
 
     def get_feat(self, fn):
@@ -229,10 +229,11 @@ class PreprocessedDataGenerator(ZeroShotDataGenerator):
 
 class CUBDataGenerator(PreprocessedDataGenerator):
     def get_data(self):
-        path = self.dataset_dir + 'cub/CUB2002011/CUB_200_2011/CUB_200_2011/'
-        y_folder = path + 'attributes/'
-        fn_y_train = y_folder + 'image_attribute_labels.txt'
-        fn_f_train = path + 'feat.npy'
+        path = os.path.join(self.dataset_dir,
+                            'cub/CUB2002011/CUB_200_2011/CUB_200_2011')
+        y_folder = os.path.join(path, 'attributes')
+        fn_y_train = os.path.join(y_folder, 'image_attribute_labels.txt')
+        fn_f_train = os.path.join(path, 'feat.npy')
         return self.load_data(fn_f_train, fn_y_train)
 
     def load_labels(self, fn):
@@ -247,10 +248,10 @@ class CUBDataGenerator(PreprocessedDataGenerator):
 
 class SUNDataGenerator(PreprocessedDataGenerator):
     def get_data(self):
-        path = self.dataset_dir + 'sun/'
-        y_folder = path + 'SUNAttributeDB/'
-        fn_y_train = y_folder + 'attributeLabels_continuous.mat'
-        fn_f_train = path + 'feat.npy'
+        path = os.path.join(self.dataset_dir, 'sun')
+        y_folder = os.path.join(path, 'SUNAttributeDB')
+        fn_y_train = os.path.join(y_folder, 'attributeLabels_continuous.mat')
+        fn_f_train = os.path.join(path, 'feat.npy')
         return self.load_data(fn_f_train, fn_y_train)
 
     def load_labels(self, fn):

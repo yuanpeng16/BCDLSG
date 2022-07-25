@@ -133,6 +133,6 @@ if __name__ == '__main__':
     parser.add_argument('--pretrain', action='store_true',
                         default=False, help='Rotate second input.')
     parser.add_argument('--dataset_dir', type=str,
-                        default='../../data/zeroshot_datasets/',
+                        default='../../data/zeroshot_datasets',
                         help='Zero-shot dataset directory.')
     main(parser.parse_args())
