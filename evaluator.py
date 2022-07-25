@@ -11,6 +11,9 @@ def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
         else:
             ev = AdversarialEvaluator(
                 args, model, datasets, large_datasets, test_label_pairs)
+    elif args.evaluator_type == 'partition':
+        ev = PartitionEvaluator(args, model, datasets, large_datasets,
+                                test_label_pairs)
     elif args.evaluator_type == 'output':
         ev = OutputEvaluator(args, model, datasets, large_datasets,
                              test_label_pairs)
@@ -43,8 +46,7 @@ class Evaluator(object):
             y2_hat.extend(y2)
         return y1_hat, y2_hat
 
-    def evaluate(self, x, y):
-        y_hat = self.forward(x)
+    def get_accuracy(self, y_hat, y):
         n_samples = len(y[0])
         y1_hat_list = y_hat[0]
         y2_hat_list = y_hat[1]
@@ -68,6 +70,10 @@ class Evaluator(object):
         sg_acc = sg_hit / n_samples
         return acc1, acc2, acc, sg_acc
 
+    def evaluate(self, x, y):
+        y_hat = self.forward(x)
+        return self.get_accuracy(y_hat, y)
+
     def test_evaluate(self, x, y):
         return self.evaluate(x, y)
 
@@ -84,6 +90,34 @@ class Evaluator(object):
 
     def large_evaluate_all(self):
         return self.evaluate_datasets(self.large_datasets)
+
+
+class PartitionEvaluator(Evaluator):
+    def get_partition(self, y_hat):
+        y1_hat_list = y_hat[0]
+        y2_hat_list = y_hat[1]
+        partition = set()
+        for y1_hat, y2_hat in zip(y1_hat_list, y2_hat_list):
+            partition.add((y1_hat, y2_hat))
+        return partition
+
+    def evaluate_partitions(self, train_prediction, all_prediction):
+        train_partition = self.get_partition(train_prediction)
+        all_partition = self.get_partition(all_prediction)
+        test_partition = all_partition.difference(train_partition)
+        ret = [len(all_partition), len(train_partition), len(test_partition)]
+        return ret
+
+    def evaluate_datasets(self, datasets):
+        datasets = self.large_datasets
+        assert len(datasets) == 3
+        train_dataset, _, random_dataset = datasets
+        train_prediction = self.forward(train_dataset[0])
+        all_prediction = self.forward(random_dataset[0])
+
+        train_acc = self.get_accuracy(train_prediction, train_dataset[1])
+        ret = self.evaluate_partitions(train_prediction, all_prediction)
+        return ret + [100 * train_acc[2]]
 
 
 class OutputEvaluator(Evaluator):
