@@ -48,10 +48,11 @@ class AbstractDataPreprocessor(object):
 class CUBDataPreprocessor(AbstractDataPreprocessor):
     def convert(self):
         dataset_dir = self.args.dataset_dir
-        path = dataset_dir + 'cub/CUB2002011/CUB_200_2011/CUB_200_2011/'
-        x_folder = path + 'images/'
-        fn_z_train = path + 'images.txt'
-        fn_f_train = path + 'feat.npy'
+        path = os.path.join(dataset_dir,
+                            'cub/CUB2002011/CUB_200_2011/CUB_200_2011')
+        x_folder = os.path.join(path, 'images')
+        fn_z_train = os.path.join(path, 'images.txt')
+        fn_f_train = os.path.join(path, 'feat.npy')
         return self.load_data(x_folder, fn_z_train, fn_f_train)
 
     def get_image_files(self, fn_z):
@@ -64,10 +65,10 @@ class CUBDataPreprocessor(AbstractDataPreprocessor):
 class SUNDataPreprocessor(AbstractDataPreprocessor):
     def convert(self):
         dataset_dir = self.args.dataset_dir
-        path = dataset_dir + 'sun/'
-        x_folder = path + 'SUNAttributeDB_Images/images/'
-        fn_z_train = path + 'SUNAttributeDB/images.mat'
-        fn_f_train = path + 'feat.npy'
+        path = os.path.join(dataset_dir, 'sun')
+        x_folder = os.path.join(path, 'SUNAttributeDB_Images/images')
+        fn_z_train = os.path.join(path, 'SUNAttributeDB/images.mat')
+        fn_f_train = os.path.join(path, 'feat.npy')
         return self.load_data(x_folder, fn_z_train, fn_f_train)
 
     def get_image_files(self, fn_z):
@@ -92,6 +93,6 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset', type=str, default='cub', help='Dataset.')
     parser.add_argument('--dataset_dir', type=str,
-                        default='../../data/zeroshot_datasets/',
+                        default='../../data/zeroshot_datasets',
                         help='Dataset directory.')
     main(parser.parse_args())

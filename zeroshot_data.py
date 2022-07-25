@@ -146,8 +146,9 @@ class APYDataGenerator(ZeroShotDataGenerator):
         feat = mat['feat']
         matrix = feat.toarray()
         matrix = np.transpose(matrix)
-        data = np.reshape(matrix, [-1, 199, 7, 7])
-        data = np.transpose(data, [0, 2, 3, 1])
+        data = np.reshape(matrix, [-1, 7, 7, 199])
+        #data = np.reshape(matrix, [-1, 199, 7, 7])
+        #data = np.transpose(data, [0, 2, 3, 1])
         return data
 
     def get_label_matrix(self, fn):
