@@ -20,7 +20,7 @@ class ZeroShotDataGenerator(object):
     def __init__(self, args):
         self.args = args
         self.labels = args.combined_labels
-        self.dataset_dir = '../../data/zeroshot_datasets/'
+        self.dataset_dir = args.dataset_dir
         self.output_nodes = 2 ** self.labels
 
         # prepare label combinations
