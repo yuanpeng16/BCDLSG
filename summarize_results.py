@@ -91,6 +91,10 @@ def main():
         ['AwA2', 'zeroshot_awa2'],
         ['CUB', 'zeroshot_cub'],
         ['SUN', 'zeroshot_sun'],
+        ['aPY tile', 'zeroshot-tile_apy'],
+        ['AwA2 tile', 'zeroshot-tile_awa2'],
+        ['CUB tile', 'zeroshot-tile_cub'],
+        ['SUN tile', 'zeroshot-tile_sun'],
         ['DNN', 'equal_dnn'],
         ['CNN', 'equal_cnn'],
         ['Tile', 'label_tile'],
@@ -110,10 +114,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
-# temp = [
-#    ['aPY tile', 'zeroshot_apy_tile_cnn_acc'],
-#    ['AwA2 tile', 'zeroshot_awa2_tile_cnn_acc'],
-#    ['CUB tile', 'zeroshot_cub_tile_cnn_acc'],
-#    ['SUN tile', 'zeroshot_sun_tile_cnn_acc']
-# ]
