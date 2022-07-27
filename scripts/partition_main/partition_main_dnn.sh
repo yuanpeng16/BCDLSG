@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
 
-if [ $# = 1 ]; then
-  GPU_ID=$1
+if [ $# = 5 ]; then
+  LOG_DIR=$1
+  N_COMMON_LAYERS=$2
+  N_SEPARATE_LAYERS=$3
+  RANDOM_SEED=$4
+  GPU_ID=$5
 else
-  GPU_ID=0
+  echo log_dir, n_common_layers, n_separate_layers, random_seed, and gpu_id.
+  exit
 fi
 
-LOG_DIR=/tmp
-N_COMMON_LAYERS=7
-N_SEPARATE_LAYERS=0
-RANDOM_SEED=1
-
-CUDA_VISIBLE_DEVICES="${GPU_ID}" \
+echo \
+  CUDA_VISIBLE_DEVICES="${GPU_ID}" \
   python3 -u main.py \
   --parameter_random_seed "${RANDOM_SEED}" \
   --data_random_seed "${RANDOM_SEED}" \

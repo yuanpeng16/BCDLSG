@@ -1,6 +1,23 @@
 import tensorflow as tf
+import numpy as np
 
 from data import one_hot
+
+
+def get_entropy(counts, normalize=True):
+    if len(counts) == 0:
+        return float('-inf')
+    assert min(counts) >= 0
+    assert sum(counts) > 0
+    counts = [a for a in counts if a > 0]
+    x = np.asarray(counts)
+    assert len(x.shape) == 1
+    if normalize:
+        den = np.sum(x)
+        x = x / den
+    log_x = np.log2(x)
+    entropy = -np.dot(log_x, x)
+    return entropy
 
 
 def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
@@ -93,19 +110,54 @@ class Evaluator(object):
 
 
 class PartitionEvaluator(Evaluator):
-    def get_partition(self, y_hat):
+    def get_counts(self, elements):
+        counts = {}
+        for y1_hat, y2_hat in elements:
+            key = (y1_hat, y2_hat)
+            counts[key] = counts.get(key, 0) + 1
+        return counts
+
+    def get_elements(self, y_hat):
         y1_hat_list = y_hat[0]
         y2_hat_list = y_hat[1]
-        partition = set()
-        for y1_hat, y2_hat in zip(y1_hat_list, y2_hat_list):
-            partition.add((y1_hat, y2_hat))
-        return partition
+        return [(a, b) for a, b in zip(y1_hat_list, y2_hat_list)]
 
-    def evaluate_partitions(self, train_prediction, all_prediction):
-        train_partition = self.get_partition(train_prediction)
-        all_partition = self.get_partition(all_prediction)
-        test_partition = all_partition.difference(train_partition)
-        ret = [len(all_partition), len(train_partition), len(test_partition)]
+    def filter(self, x, f):
+        return {key: value for key, value in x.items() if key in f}
+
+    def get_perplexity(self, counts):
+        if len(counts) == 0:
+            return 0.0
+        count_list = [value for _, value in counts.items()]
+        entropy = get_entropy(count_list)
+        perplexity = 2 ** entropy
+        return perplexity
+
+    def evaluate_partitions(self, train_prediction, random_prediction):
+        dense_train_partition = set(self.get_elements(train_prediction))
+        random_elements = self.get_elements(random_prediction)
+
+        # partitions
+        random_partition = set(random_elements)
+        test_partition = random_partition.difference(dense_train_partition)
+        train_partition = random_partition.difference(test_partition)
+
+        random_num = len(random_partition)
+        train_num = len(train_partition)
+        test_num = len(test_partition)
+        partitions = [random_num, train_num, test_num]
+
+        # entropy
+        random_count = self.get_counts(random_elements)
+        train_count = self.filter(random_count, train_partition)
+        test_count = self.filter(random_count, test_partition)
+
+        random_entropy = self.get_perplexity(random_count)
+        train_entropy = self.get_perplexity(train_count)
+        test_entropy = self.get_perplexity(test_count)
+        entropies = [random_entropy, train_entropy, test_entropy]
+
+        ret = partitions + entropies
         return ret
 
     def evaluate_datasets(self, datasets):
