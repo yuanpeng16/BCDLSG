@@ -31,6 +31,9 @@ def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
     elif args.evaluator_type == 'partition':
         ev = PartitionEvaluator(args, model, datasets, large_datasets,
                                 test_label_pairs)
+    elif args.evaluator_type == 'partition-f':
+        ev = FocusedPartitionEvaluator(args, model, datasets, large_datasets,
+                                       test_label_pairs)
     elif args.evaluator_type == 'output':
         ev = OutputEvaluator(args, model, datasets, large_datasets,
                              test_label_pairs)
@@ -169,6 +172,47 @@ class PartitionEvaluator(Evaluator):
 
         train_acc = self.get_accuracy(train_prediction, train_dataset[1])
         ret = self.evaluate_partitions(train_prediction, all_prediction)
+        return ret + [100 * train_acc[2]]
+
+
+class FocusedPartitionEvaluator(PartitionEvaluator):
+    def evaluate_partitions(self, train_prediction, random_prediction):
+        random_elements = self.get_elements(random_prediction)
+        all_train_elements = self.get_elements(train_prediction)
+
+        # partitions
+        random_partition = set(random_elements)
+        all_train_partition = set(all_train_elements)
+        train_partition = random_partition.intersection(all_train_partition)
+        test_partition = random_partition.difference(all_train_partition)
+
+        random_num = len(random_partition)
+        train_num = len(train_partition)
+        test_num = len(test_partition)
+        partitions = [random_num, train_num, test_num]
+
+        # counts
+        random_count = self.get_counts(random_elements)
+        label_count = self.filter(random_count, self.test_label_pairs)
+        test_count = self.filter(random_count, test_partition)
+
+        label_samples = sum([v for _, v in label_count.items()])
+        test_samples = sum([v for _, v in test_count.items()])
+        counts = [(100 * test_samples) / len(random_elements),
+                  (100 * label_samples) / len(random_elements)]
+
+        ret = partitions + counts
+        return ret
+
+    def evaluate_datasets(self, datasets):
+        datasets = self.large_datasets
+        assert len(datasets) == 3
+        train_dataset, test_dataset, _ = datasets
+        train_prediction = self.forward(train_dataset[0])
+        test_prediction = self.forward(test_dataset[0])
+
+        train_acc = self.get_accuracy(train_prediction, train_dataset[1])
+        ret = self.evaluate_partitions(train_prediction, test_prediction)
         return ret + [100 * train_acc[2]]
 
 
