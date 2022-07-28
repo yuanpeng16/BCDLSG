@@ -164,7 +164,6 @@ class PartitionEvaluator(Evaluator):
         return ret
 
     def evaluate_datasets(self, datasets):
-        datasets = self.large_datasets
         assert len(datasets) == 3
         train_dataset, _, random_dataset = datasets
         train_prediction = self.forward(train_dataset[0])
@@ -174,46 +173,76 @@ class PartitionEvaluator(Evaluator):
         ret = self.evaluate_partitions(train_prediction, all_prediction)
         return ret + [100 * train_acc[2]]
 
+    def evaluate_all(self):
+        return self.large_evaluate_all()
+
 
 class FocusedPartitionEvaluator(PartitionEvaluator):
-    def evaluate_partitions(self, train_prediction, random_prediction):
-        random_elements = self.get_elements(random_prediction)
-        all_train_elements = self.get_elements(train_prediction)
+    def split_test_data(self, train_labels, test_counts):
+        test_in_train = {}
+        test_in_test = {}
+        for key, value in test_counts.items():
+            if key in train_labels:
+                test_in_train[key] = value
+            else:
+                test_in_test[key] = value
+        return test_in_train, test_in_test
 
-        # partitions
-        random_partition = set(random_elements)
-        all_train_partition = set(all_train_elements)
-        train_partition = random_partition.intersection(all_train_partition)
-        test_partition = random_partition.difference(all_train_partition)
+    def get_values(self, train_labels, test_counts, opposite=False):
+        test_in_train, test_in_test = self.split_test_data(
+            train_labels, test_counts)
+        if opposite:
+            test_in_test, test_in_train = test_in_train, test_in_test
+        test_num = sum([v for _, v in test_counts.items()])
+        predict_num = sum([v for _, v in test_in_test.items()])
+        ratio = (100 * predict_num) / test_num
+        predict = [len(test_in_train), len(test_in_test), ratio]
+        return predict
 
-        random_num = len(random_partition)
-        train_num = len(train_partition)
-        test_num = len(test_partition)
-        partitions = [random_num, train_num, test_num]
+    def evaluate_partitions(self, train_labels, test_prediction):
+        test_elements = self.get_elements(test_prediction)
+        test_counts = self.get_counts(test_elements)
 
-        # counts
-        random_count = self.get_counts(random_elements)
-        label_count = self.filter(random_count, self.test_label_pairs)
-        test_count = self.filter(random_count, test_partition)
-
-        label_samples = sum([v for _, v in label_count.items()])
-        test_samples = sum([v for _, v in test_count.items()])
-        counts = [(100 * test_samples) / len(random_elements),
-                  (100 * label_samples) / len(random_elements)]
-
-        ret = partitions + counts
-        return ret
+        predict = self.get_values(train_labels, test_counts)
+        truth = self.get_values(self.test_label_pairs, test_counts,
+                                opposite=True)
+        return predict + truth
 
     def evaluate_datasets(self, datasets):
-        datasets = self.large_datasets
+        """
+        Return statistics
+        :param datasets:
+        :return:
+        01 step
+        02 # of prediction i.i.d. test partitions
+        03 # of prediction o.o.d. test partitions
+        04 Ratio of prediction o.o.d. test samples
+        05 # of ground-truth i.i.d. test partitions
+        06 # of ground-truth o.o.d. test partitions
+        07 Ratio of ground-truth o.o.d. test samples
+        08 # of prediction i.i.d. random partitions
+        09 # of prediction o.o.d. random partitions
+        10 Ratio of prediction o.o.d. random samples
+        11 # of ground-truth i.i.d. random partitions
+        12 # of ground-truth o.o.d. random partitions
+        13 Ratio of ground-truth o.o.d. random samples
+        14 # of training partitions
+        15 Training sample accuracy
+        """
         assert len(datasets) == 3
-        train_dataset, test_dataset, _ = datasets
+        train_dataset, test_dataset, random_dataset = datasets
         train_prediction = self.forward(train_dataset[0])
         test_prediction = self.forward(test_dataset[0])
+        random_prediction = self.forward(random_dataset[0])
 
         train_acc = self.get_accuracy(train_prediction, train_dataset[1])
-        ret = self.evaluate_partitions(train_prediction, test_prediction)
-        return ret + [100 * train_acc[2]]
+
+        train_elements = self.get_elements(train_prediction)
+        train_labels = set(train_elements)
+        test_ret = self.evaluate_partitions(train_labels, test_prediction)
+        random_ret = self.evaluate_partitions(
+            train_labels, random_prediction)
+        return test_ret + random_ret + [len(train_labels), 100 * train_acc[2]]
 
 
 class OutputEvaluator(Evaluator):

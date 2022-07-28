@@ -1,17 +1,26 @@
 #!/bin/bash
 if [ $# -gt 0 ]; then
-  COL=$1
+  exp_id=$1
 else
-  COL=8
+  exp_id="partition-f_main_dnn"
 fi
 
-log_dir="logs/partition-f_main_cnn"
-output_dir="/tmp/${log_dir}"
+log_dir="logs/${exp_id}"
+temp_dir="/tmp/${log_dir}"
+mkdir -p "${temp_dir}"
+
+output_dir="outputs/${exp_id}"
 mkdir -p "${output_dir}"
 
-for i in $(ls -d ${log_dir}/*); do
-  tmp_dir="/tmp/${i}.txt"
-  cat "${i}/log.txt" | grep -v final | cut -d' ' -f"${COL}" >"${tmp_dir}"
-done
+prefix="${log_dir}/${exp_id}"
 
-paste ${output_dir}/*_0_7_1.txt ${output_dir}/*_7_0_1.txt
+for COL in $(seq 15); do
+  for i in "${prefix}_0_7_1" "${prefix}_7_0_1"; do
+    temp_file="/tmp/${i}.txt"
+    grep -v final <"${i}/log.txt" | cut -d' ' -f"${COL}" >"${temp_file}"
+  done
+
+  paste "${temp_dir}/${exp_id}_0_7_1.txt" "${temp_dir}/${exp_id}_7_0_1.txt" |
+    python3 "${HOME}"/Work/repositories/tools/plot.py \
+      --filename "${output_dir}/${COL}.pdf"
+done
