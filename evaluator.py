@@ -32,7 +32,7 @@ def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
         ev = PartitionEvaluator(args, model, datasets, large_datasets,
                                 test_label_pairs)
     elif args.evaluator_type == 'partition-f':
-        ev = FocusedPartitionEvaluator(args, model, datasets, large_datasets,
+        ev = FilteredPartitionEvaluator(args, model, datasets, large_datasets,
                                        test_label_pairs)
     else:
         ev = Evaluator(args, model, datasets, large_datasets, test_label_pairs)
@@ -202,6 +202,9 @@ class FocusedPartitionEvaluator(PartitionEvaluator):
                                 opposite=True)
         return predict + truth
 
+    def get_train_labels(self, train_elements):
+        return set(train_elements)
+
     def evaluate_datasets(self, datasets):
         """
         Return statistics
@@ -232,11 +235,30 @@ class FocusedPartitionEvaluator(PartitionEvaluator):
         train_acc = self.get_accuracy(train_prediction, train_dataset[1])
 
         train_elements = self.get_elements(train_prediction)
-        train_labels = set(train_elements)
+        train_labels = self.get_train_labels(train_elements)
         test_ret = self.evaluate_partitions(train_labels, test_prediction)
         random_ret = self.evaluate_partitions(
             train_labels, random_prediction)
         return test_ret + random_ret + [len(train_labels), 100 * train_acc[2]]
+
+
+class FilteredPartitionEvaluator(FocusedPartitionEvaluator):
+    def filter_counts(self, counts):
+        items = list(counts.items())
+        items = sorted(items, key=lambda x: x[1], reverse=True)
+        size = min(len(items), len(self.test_label_pairs))
+        filtered = items[:size]
+        ret = {k: v for (k, v) in filtered}
+        return ret
+
+    def get_train_labels(self, train_elements):
+        train_counts = self.get_counts(train_elements)
+        keys = set([k for (k, _) in train_counts.items()])
+        return keys
+
+    def get_counts(self, elements):
+        counts = super().get_counts(elements)
+        return self.filter_counts(counts)
 
 
 class AdversarialEvaluator(Evaluator):
