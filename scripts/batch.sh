@@ -21,12 +21,18 @@ else
   DEPTH=7
 fi
 
-MY_DIR=$(dirname "$(readlink -f "$0")")
+if [ "$(echo "${ID}" | grep -o partition)" = partition ]; then
+  LAYERS="0 ${DEPTH}"
+else
+  LAYERS=$(seq 0 ${DEPTH})
+fi
+
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 for RANDOM_SEED in $(seq 5); do
-  for N_COMMON_LAYERS in $(seq 0 ${DEPTH}); do
-    N_SEPARATE_LAYERS=$((${DEPTH} - ${N_COMMON_LAYERS}))
-    sh "${MY_DIR}"/wrapper.sh \
+  for N_COMMON_LAYERS in ${LAYERS}; do
+    N_SEPARATE_LAYERS=$((DEPTH - N_COMMON_LAYERS))
+    sh "${SCRIPT_DIR}"/wrapper.sh \
       "${SCRIPT}" \
       "${N_COMMON_LAYERS}" \
       "${N_SEPARATE_LAYERS}" \
