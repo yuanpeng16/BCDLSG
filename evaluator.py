@@ -20,6 +20,15 @@ def get_entropy(counts, normalize=True):
     return entropy
 
 
+def get_perplexity(counts):
+    if len(counts) == 0:
+        return 0.0
+    count_list = [value for _, value in counts.items()]
+    entropy = get_entropy(count_list)
+    perplexity = 2 ** entropy
+    return perplexity
+
+
 def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
     if args.adversarial:
         if args.any_generalization:
@@ -33,7 +42,7 @@ def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
                                 test_label_pairs)
     elif args.evaluator_type == 'partition-f':
         ev = FilteredPartitionEvaluator(args, model, datasets, large_datasets,
-                                       test_label_pairs)
+                                        test_label_pairs)
     else:
         ev = Evaluator(args, model, datasets, large_datasets, test_label_pairs)
     return ev
@@ -107,6 +116,12 @@ class Evaluator(object):
 
 
 class PartitionEvaluator(Evaluator):
+    def evaluate_all(self):
+        return self.large_evaluate_all()
+
+    def get_train_labels(self, train_elements):
+        return set(train_elements)
+
     def get_counts(self, elements):
         counts = {}
         for y1_hat, y2_hat in elements:
@@ -119,59 +134,6 @@ class PartitionEvaluator(Evaluator):
         y2_hat_list = y_hat[1]
         return [(a, b) for a, b in zip(y1_hat_list, y2_hat_list)]
 
-    def filter(self, x, f):
-        return {key: value for key, value in x.items() if key in f}
-
-    def get_perplexity(self, counts):
-        if len(counts) == 0:
-            return 0.0
-        count_list = [value for _, value in counts.items()]
-        entropy = get_entropy(count_list)
-        perplexity = 2 ** entropy
-        return perplexity
-
-    def evaluate_partitions(self, train_prediction, random_prediction):
-        dense_train_partition = set(self.get_elements(train_prediction))
-        random_elements = self.get_elements(random_prediction)
-
-        # partitions
-        random_partition = set(random_elements)
-        test_partition = random_partition.difference(dense_train_partition)
-        train_partition = random_partition.difference(test_partition)
-
-        random_num = len(random_partition)
-        train_num = len(train_partition)
-        test_num = len(test_partition)
-        partitions = [random_num, train_num, test_num]
-
-        # entropy
-        random_count = self.get_counts(random_elements)
-        train_count = self.filter(random_count, train_partition)
-        test_count = self.filter(random_count, test_partition)
-
-        random_entropy = self.get_perplexity(random_count)
-        train_entropy = self.get_perplexity(train_count)
-        test_entropy = self.get_perplexity(test_count)
-        entropies = [random_entropy, train_entropy, test_entropy]
-
-        ret = partitions + entropies
-        return ret
-
-    def evaluate_datasets(self, datasets):
-        assert len(datasets) == 3
-        train_dataset, _, random_dataset = datasets
-        train_prediction = self.forward(train_dataset[0])
-        all_prediction = self.forward(random_dataset[0])
-
-        train_acc = self.get_accuracy(train_prediction, train_dataset[1])
-        ret = self.evaluate_partitions(train_prediction, all_prediction)
-        return ret + [100 * train_acc[2]]
-
-    def evaluate_all(self):
-        return self.large_evaluate_all()
-
-
-class FocusedPartitionEvaluator(PartitionEvaluator):
     def split_test_data(self, train_labels, test_counts):
         test_in_train = {}
         test_in_test = {}
@@ -201,9 +163,6 @@ class FocusedPartitionEvaluator(PartitionEvaluator):
         truth = self.get_values(self.test_label_pairs, test_counts,
                                 opposite=True)
         return predict + truth
-
-    def get_train_labels(self, train_elements):
-        return set(train_elements)
 
     def evaluate_datasets(self, datasets):
         """
@@ -242,7 +201,7 @@ class FocusedPartitionEvaluator(PartitionEvaluator):
         return test_ret + random_ret + [len(train_labels), 100 * train_acc[2]]
 
 
-class FilteredPartitionEvaluator(FocusedPartitionEvaluator):
+class FilteredPartitionEvaluator(PartitionEvaluator):
     def filter_counts(self, counts):
         items = list(counts.items())
         items = sorted(items, key=lambda x: x[1], reverse=True)
