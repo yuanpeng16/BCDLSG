@@ -13,9 +13,9 @@ else
 fi
 
 ID=$(basename "${SCRIPT}" | sed "s/.sh$//g")
-if [ "${ID}" = main_resnet ]; then
+if [ "$(echo "${ID}" | grep -o resnet)" = resnet ]; then
   DEPTH=5
-elif [ "${ID}" = main_lstm-1 ]; then
+elif [ "$(echo "${ID}" | grep -o lstm-1)" = lstm-1 ]; then
   DEPTH=2
 else
   DEPTH=7

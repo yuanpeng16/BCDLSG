@@ -88,8 +88,15 @@ def main(args):
 
     experiment_id = args.experiment_id
     log_prefix = os.path.join('logs', experiment_id, experiment_id)
-    individual_prefix = log_prefix + '_0_7_'
-    shared_prefix = log_prefix + '_7_0_'
+
+    if experiment_id.endswith('resnet'):
+        depth = 5
+    elif experiment_id.endswith('lstm-1'):
+        depth = 2
+    else:
+        depth = 7
+    individual_prefix = log_prefix + '_0_' + str(depth) + '_'
+    shared_prefix = log_prefix + '_' + str(depth) + '_0_'
 
     individual_matrix_list = []
     shared_matrix_list = []
