@@ -43,6 +43,9 @@ def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
     elif args.evaluator_type == 'partition-f':
         ev = FilteredPartitionEvaluator(args, model, datasets, large_datasets,
                                         test_label_pairs)
+    elif args.evaluator_type == 'partition-t':
+        ev = ThresholdPartitionEvaluator(args, model, datasets, large_datasets,
+                                         test_label_pairs)
     else:
         ev = Evaluator(args, model, datasets, large_datasets, test_label_pairs)
     return ev
@@ -116,11 +119,18 @@ class Evaluator(object):
 
 
 class PartitionEvaluator(Evaluator):
+    def __init__(self, args, model, datasets, large_datasets,
+                 test_label_pairs):
+        super().__init__(args, model, datasets, large_datasets,
+                         test_label_pairs)
+
+        y = self.large_datasets[0][1]
+        n_first_factor = len(y[0][0])
+        n_second_factor = len(y[1][0])
+        self.n_possible_outputs = n_first_factor * n_second_factor
+
     def evaluate_all(self):
         return self.large_evaluate_all()
-
-    def get_train_labels(self, train_elements):
-        return set(train_elements)
 
     def get_counts(self, elements):
         counts = {}
@@ -134,7 +144,7 @@ class PartitionEvaluator(Evaluator):
         y2_hat_list = y_hat[1]
         return [(a, b) for a, b in zip(y1_hat_list, y2_hat_list)]
 
-    def split_test_data(self, train_labels, test_counts):
+    def split_test_data(self, train_labels, test_counts, opposite=False):
         test_in_train = {}
         test_in_test = {}
         for key, value in test_counts.items():
@@ -142,26 +152,38 @@ class PartitionEvaluator(Evaluator):
                 test_in_train[key] = value
             else:
                 test_in_test[key] = value
-        return test_in_train, test_in_test
 
-    def get_values(self, train_labels, test_counts, opposite=False):
-        test_in_train, test_in_test = self.split_test_data(
-            train_labels, test_counts)
         if opposite:
             test_in_test, test_in_train = test_in_train, test_in_test
-        test_num = sum([v for _, v in test_counts.items()])
-        predict_num = sum([v for _, v in test_in_test.items()])
+        return test_in_train, test_in_test
+
+    def get_values(self, train_labels, test_counts, all_test_counts,
+                   opposite=False):
+        # Partitions
+        test_in_train, test_in_test = self.split_test_data(
+            train_labels, test_counts, opposite=opposite)
+
+        # Ratio
+        _, all_test_in_test = self.split_test_data(
+            train_labels, all_test_counts, opposite=opposite)
+        test_num = sum([v for _, v in all_test_counts.items()])
+        predict_num = sum([v for _, v in all_test_in_test.items()])
         ratio = (100 * predict_num) / test_num
+
         predict = [len(test_in_train), len(test_in_test), ratio]
         return predict
 
-    def evaluate_partitions(self, train_labels, test_prediction):
-        test_elements = self.get_elements(test_prediction)
-        test_counts = self.get_counts(test_elements)
+    def filter_counts(self, counts):
+        return counts
 
-        predict = self.get_values(train_labels, test_counts)
+    def evaluate_partitions(self, train_labels, test_prediction):
+        all_test_elements = self.get_elements(test_prediction)
+        all_test_counts = self.get_counts(all_test_elements)
+        test_counts = self.filter_counts(all_test_counts)
+
+        predict = self.get_values(train_labels, test_counts, all_test_counts)
         truth = self.get_values(self.test_label_pairs, test_counts,
-                                opposite=True)
+                                all_test_counts, opposite=True)
         return predict + truth
 
     def evaluate_datasets(self, datasets):
@@ -193,11 +215,14 @@ class PartitionEvaluator(Evaluator):
 
         train_acc = self.get_accuracy(train_prediction, train_dataset[1])
 
-        train_elements = self.get_elements(train_prediction)
-        train_labels = self.get_train_labels(train_elements)
+        # train partitions
+        all_train_elements = self.get_elements(train_prediction)
+        all_train_counts = self.get_counts(all_train_elements)
+        train_counts = self.filter_counts(all_train_counts)
+        train_labels = set([k for k, _ in train_counts.items()])
+
         test_ret = self.evaluate_partitions(train_labels, test_prediction)
-        random_ret = self.evaluate_partitions(
-            train_labels, random_prediction)
+        random_ret = self.evaluate_partitions(train_labels, random_prediction)
         return test_ret + random_ret + [len(train_labels), 100 * train_acc[2]]
 
 
@@ -210,14 +235,22 @@ class FilteredPartitionEvaluator(PartitionEvaluator):
         ret = {k: v for (k, v) in filtered}
         return ret
 
-    def get_train_labels(self, train_elements):
-        train_counts = self.get_counts(train_elements)
-        keys = set([k for (k, _) in train_counts.items()])
-        return keys
 
-    def get_counts(self, elements):
-        counts = super().get_counts(elements)
-        return self.filter_counts(counts)
+class ThresholdPartitionEvaluator(PartitionEvaluator):
+    def filter_counts(self, counts):
+        """
+        Threshold of 10% of average count.
+        :param counts:
+        :return:
+        """
+        n_all_samples = sum([v for _, v in counts.items()])
+        nom = 10 * self.n_possible_outputs
+        threshold = n_all_samples // nom
+        if n_all_samples % nom == 0:
+            ret = {k: v for k, v in counts.items() if v >= threshold}
+        else:
+            ret = {k: v for k, v in counts.items() if v > threshold}
+        return ret
 
 
 class AdversarialEvaluator(Evaluator):
