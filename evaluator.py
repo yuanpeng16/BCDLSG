@@ -238,11 +238,6 @@ class FilteredPartitionEvaluator(PartitionEvaluator):
 
 class ThresholdPartitionEvaluator(PartitionEvaluator):
     def filter_counts(self, counts):
-        """
-        Threshold of 10% of average count.
-        :param counts:
-        :return:
-        """
         n_all_samples = sum([v for _, v in counts.items()])
         nom = int(self.args.partition_threshold_percentage * n_all_samples)
         den = 100 * self.n_possible_outputs
