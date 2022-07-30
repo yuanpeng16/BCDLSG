@@ -239,13 +239,9 @@ class FilteredPartitionEvaluator(PartitionEvaluator):
 class ThresholdPartitionEvaluator(PartitionEvaluator):
     def filter_counts(self, counts):
         n_all_samples = sum([v for _, v in counts.items()])
-        nom = int(self.args.partition_threshold_percentage * n_all_samples)
+        nom = self.args.partition_threshold_percentage * n_all_samples
         den = 100 * self.n_possible_outputs
-        threshold = nom // den
-        if nom % den == 0:
-            ret = {k: v for k, v in counts.items() if v >= threshold}
-        else:
-            ret = {k: v for k, v in counts.items() if v > threshold}
+        ret = {k: v for k, v in counts.items() if den * v >= nom}
         return ret
 
 

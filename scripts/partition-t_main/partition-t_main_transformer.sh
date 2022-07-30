@@ -19,7 +19,7 @@ echo \
   --merge_type text \
   --model_type transformer \
   --evaluator_type partition-t \
-  --log_interval 20 \
+  --log_interval 200 \
   --batch_size 64 \
   --lr 0.001 \
   --steps 2000 \

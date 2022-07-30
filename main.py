@@ -135,7 +135,7 @@ if __name__ == '__main__':
     parser.add_argument('--dataset_dir', type=str,
                         default='../../data/zeroshot_datasets',
                         help='Zero-shot dataset directory.')
-    parser.add_argument('--partition_threshold_percentage', type=float,
+    parser.add_argument('--partition_threshold_percentage', type=int,
                         default=50,
                         help='Partition threshold percentage for evaluation.')
     main(parser.parse_args())
