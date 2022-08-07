@@ -111,7 +111,7 @@ class AbstractSingleModelGenerator(AbstractModelGenerator):
         return x_list
 
     def get_output_layer(self, x, activation, name):
-        return Dense(1, activation=activation, name=name)(x)
+        return Dense(1, use_bias=False, activation=activation, name=name)(x)
 
     def get_structure(self):
         if len(self.input_shape) > 1:

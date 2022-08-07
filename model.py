@@ -69,16 +69,17 @@ class DNNSingleModelGenerator(AbstractSingleModelGenerator):
         return tf.keras.layers.Flatten()(x)
 
     def get_intermediate_layer(self, hn, x):
-        return tf.keras.layers.Dense(hn, activation='relu')(x)
+        return tf.keras.layers.Dense(hn, use_bias=False, activation='relu')(x)
 
 
 class CNNSingleModelGenerator(AbstractSingleModelGenerator):
     def get_one_layer(self, hn, x, index, part):
         if index == self.depth - 1:
-            x = tf.keras.layers.Dense(2 * hn, activation='relu')(x)
+            x = tf.keras.layers.Dense(
+                2 * hn, use_bias=False, activation='relu')(x)
         else:
-            x = tf.keras.layers.Conv2D(hn, (3, 3), activation='relu',
-                                       padding='SAME')(x)
+            x = tf.keras.layers.Conv2D(hn, (3, 3), use_bias=False,
+                                       activation='relu', padding='SAME')(x)
             if index == self.depth - 2:
                 x = tf.keras.layers.Flatten()(x)
         return x
