@@ -89,3 +89,49 @@ class AbstractModelGenerator(object):
 
     def set_vocab_size(self, vocab_size):
         self.vocab_size = vocab_size
+
+
+class AbstractSingleModelGenerator(AbstractModelGenerator):
+    def get_main_model(self, x):
+        x = self.convert_input(x)
+        for i in range(self.args.n_common_layers):
+            x = self.get_one_layer(self.args.n_hidden_nodes, x, i, 0)
+        x_list = [x] * self.output_nodes
+
+        if self.constant_n_hidden_nodes():
+            h_size = self.args.n_hidden_nodes
+        else:
+            h_size = self.args.n_hidden_nodes // self.output_nodes
+        h_list = [h_size] * self.output_nodes
+
+        for i in range(self.args.n_separate_layers):
+            index = self.args.n_common_layers + i
+            x_list = [self.get_one_layer(h, x, index, j + 1) for j, [h, x] in
+                      enumerate(zip(h_list, x_list))]
+        return x_list
+
+    def get_output_layer(self, x, activation, name):
+        return Dense(1, activation=activation, name=name)(x)
+
+    def get_structure(self):
+        if len(self.input_shape) > 1:
+            input_type = tf.float32
+        else:
+            input_type = tf.int32
+
+        inputs = Input(shape=self.input_shape, dtype=input_type)
+        x_list = self.get_main_model(inputs)
+
+        activation = 'sigmoid'
+        outputs = [self.get_output_layer(x, activation, 'y' + str(i + 1)) for
+                   i, x in enumerate(x_list)]
+        outputs = tf.concat(outputs, -1)
+        model = Model(inputs=inputs, outputs=outputs)
+        return model
+
+    def get_model(self):
+        model = self.get_structure()
+        adam = tf.keras.optimizers.Adam(lr=self.args.lr)
+        loss = tf.keras.losses.BinaryCrossentropy()
+        model.compile(optimizer=adam, loss=loss, metrics=['accuracy'])
+        return model

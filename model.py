@@ -1,6 +1,7 @@
 import tensorflow as tf
 
 from abstract_model import AbstractModelGenerator
+from abstract_model import AbstractSingleModelGenerator
 from resnet import ResNetGenerator
 from separate_transformer import TransformerGenerator
 from separate_vision_transformer import VisionTransformerGenerator
@@ -19,6 +20,10 @@ def get_model_generator(args, input_shape, output_nodes):
         model = LSTMModelGenerator(args, input_shape, output_nodes)
     elif args.model_type == 'transformer':
         model = TransformerGenerator(args, input_shape, output_nodes)
+    elif args.model_type == 'dnn_single':
+        model = DNNSingleModelGenerator(args, input_shape, output_nodes)
+    elif args.model_type == 'cnn_single':
+        model = CNNSingleModelGenerator(args, input_shape, output_nodes)
     else:
         raise ValueError(
             '{0} is not a valid model_type.'.format(args.model_type))
@@ -57,3 +62,23 @@ class LSTMModelGenerator(AbstractModelGenerator):
     def get_last_layer(self, hn, x):
         x = self.get_intermediate_layer(hn, x)
         return tf.keras.layers.Flatten()(x)
+
+
+class DNNSingleModelGenerator(AbstractSingleModelGenerator):
+    def convert_input(self, x):
+        return tf.keras.layers.Flatten()(x)
+
+    def get_intermediate_layer(self, hn, x):
+        return tf.keras.layers.Dense(hn, activation='relu')(x)
+
+
+class CNNSingleModelGenerator(AbstractSingleModelGenerator):
+    def get_one_layer(self, hn, x, index, part):
+        if index == self.depth - 1:
+            x = tf.keras.layers.Dense(2 * hn, activation='relu')(x)
+        else:
+            x = tf.keras.layers.Conv2D(hn, (3, 3), activation='relu',
+                                       padding='SAME')(x)
+            if index == self.depth - 2:
+                x = tf.keras.layers.Flatten()(x)
+        return x

@@ -46,6 +46,9 @@ def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
     elif args.evaluator_type == 'partition-t':
         ev = ThresholdPartitionEvaluator(args, model, datasets, large_datasets,
                                          test_label_pairs)
+    elif args.evaluator_type == 'single':
+        ev = SingleEvaluator(args, model, datasets, large_datasets,
+                               test_label_pairs)
     else:
         ev = Evaluator(args, model, datasets, large_datasets, test_label_pairs)
     return ev
@@ -243,6 +246,33 @@ class ThresholdPartitionEvaluator(PartitionEvaluator):
         den = 100 * self.n_possible_outputs
         ret = {k: v for k, v in counts.items() if den * v >= nom}
         return ret
+
+
+class SingleEvaluator(Evaluator):
+    def forward(self, x):
+        y1_hat = []
+        size = self.args.batch_size
+        for i in range(0, len(x), size):
+            j = min(i + size, len(x))
+            y1 = self.model(x[i:j])
+            y1 = tf.argmax(y1, -1).numpy()
+            y1_hat.extend(y1)
+        return y1_hat
+
+    def get_accuracy(self, y_hat, y):
+        n_samples = len(y)
+        y1_hat_list = y_hat
+        hit1, sg_hit = 0, 0
+        for i in range(n_samples):
+            y1_hat = y1_hat_list[i]
+            if (y1_hat, y1_hat) in self.test_label_pairs:
+                sg_hit += 1
+            h1 = y[i][y1_hat] == 1
+            if h1:
+                hit1 += 1
+        acc1 = hit1 / n_samples
+        sg_acc = sg_hit / n_samples
+        return 0, 0, acc1, sg_acc
 
 
 class AdversarialEvaluator(Evaluator):

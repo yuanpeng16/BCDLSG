@@ -30,6 +30,8 @@ def get_data_generator(args):
         dg = CUBDataGenerator(args)
     elif args.merge_type == 'zeroshot_sun':
         dg = SUNDataGenerator(args)
+    elif args.merge_type == 'single':
+        dg = SingleDataGenerator(args)
     else:
         raise ValueError(
             '{0} is not a valid merge_type.'.format(args.merge_type))
@@ -392,3 +394,37 @@ class TextDataGenerator(RandomDataGenerator):
                         samples[i][j] = np.random.randint(
                             2, high=self.vocab_size)
         return samples, y_list
+
+
+class SingleDataGenerator(RandomDataGenerator):
+    def __init__(self, args):
+        self.args = args
+        self.output_nodes = 10
+
+        train1, test1, self.shape1 = self._get_data(args.dataset1)
+        self.input_shape = self.compute_input_shape()
+
+        # Preprocessing
+        self.train_samples1 = self._prepare_data(train1, False)
+        self.test_samples1 = self._prepare_data(test1, False)
+        self.train_samples2 = self.train_samples1
+        self.test_samples2 = self.test_samples1
+
+        self.train_label_pairs = [(i, i) for i in range(5)]
+        self.test_label_pairs = [(i, i) for i in range(5, 10)]
+        self.all_train_pairs = self.train_label_pairs + self.test_label_pairs
+
+    def compute_one_input_shape(self):
+        return self.shape1
+
+    def compute_input_shape(self):
+        return self.shape1
+
+    def _get_samples(self, samples1, samples2, k, is_train, pretrain=False):
+        x_list, [y_list, _] = super()._get_samples(
+            samples1, samples2, k, is_train, pretrain=pretrain)
+        return x_list, y_list
+
+    def _merge(self, y, y2, samples1, samples2):
+        x1 = random.choice(samples1[y])
+        return x1
