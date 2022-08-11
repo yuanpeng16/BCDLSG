@@ -99,6 +99,8 @@ def main():
         ['CNN', 'equal_cnn'],
         ['Tile', 'label_tile'],
         ['Oneshot', 'label_oneshot'],
+        ['Single DNN', 'single_dnn'],
+        ['Single CNN', 'single_cnn'],
     ]
     names = [x[1] for x in all_names]
     exp_names = [x[0] for x in all_names]
