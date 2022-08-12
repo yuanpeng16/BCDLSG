@@ -88,9 +88,9 @@ if __name__ == '__main__':
     parser.add_argument('--parameter_random_seed', type=int, default=7,
                         help='Random seed.')
     parser.add_argument('--n_shared_layers', type=int, default=2,
-                        help='Number of hidden layer.')
+                        help='Number of shared layer.')
     parser.add_argument('--n_individual_layers', type=int, default=1,
-                        help='Number of hidden layer.')
+                        help='Number of individual layer.')
     parser.add_argument('--n_hidden_nodes', type=int, default=32,
                         help='Number of nodes in hidden layer.')
     parser.add_argument('--loss_type', type=str, default='cross_entropy',
