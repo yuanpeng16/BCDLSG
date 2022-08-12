@@ -35,7 +35,8 @@ ID=$(basename "${SCRIPT}" | sed "s/.sh$//g")
 ABS_PATH=$(readlink -f "${SCRIPT}")
 cd "$(dirname "$(dirname "$(dirname "${ABS_PATH}")")")" || exit
 
-LOG_DIR="logs/${ID}/${ID}_${N_SHARED_LAYERS}_${N_INDIVIDUAL_LAYERS}_${RANDOM_SEED}"
+EXPERIMENT_ID="${ID}_${N_SHARED_LAYERS}_${N_INDIVIDUAL_LAYERS}_${RANDOM_SEED}"
+LOG_DIR="logs/${ID}/${EXPERIMENT_ID}"
 mkdir -p "${LOG_DIR}"
 cp "${ABS_PATH}" "${LOG_DIR}"
 
