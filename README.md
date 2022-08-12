@@ -49,4 +49,4 @@ Please download data and put to corresponding folder.
 
 ## Visualized examples
 
-Please visit https://gitee.com/yuanpeng16/multilabel_playground
+Please visit https://github.com/yuanpeng16/multilabel_playground
