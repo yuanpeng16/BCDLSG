@@ -44,7 +44,8 @@ Please download data and put to corresponding folder.
     python3 plot_results.py --experiment_id main_dnn --show_legend
 
 ### training process
-    python3 plot_results.py --experiment_id main_dnn --experiment_type steps --show_legend
+
+    python3 plot_analysis.py --experiment_id partition-t_main_dnn
 
 ## Visualized examples
 
