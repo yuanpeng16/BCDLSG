@@ -36,30 +36,7 @@ def format_print(matrix):
         print(' & '.join(line) + ' \\\\')
 
 
-def output_result(matrix, type_names, exp_names):
-    assert len(type_names) == len(matrix)
-    ret = [[''] + exp_names]
-    for name, vec in zip(type_names, matrix):
-        line = [name]
-        for term in vec:
-            mean = str(round(term[0], 1))
-            std = str(round(term[1], 1))
-            element = mean + ' {\\small$\\pm$ ' + std + '\\par}'
-            line.append(element)
-        ret.append(line)
-    format_print(ret)
-
-
 def dump(matrix, exp_names):
-    type_names = ['Individual', 'Shared']
-    exp_names = ['\\multicolumn{1}{c}{' + x + '}' for x in exp_names]
-    matrix = np.transpose(matrix, [2, 1, 0, 3])
-    for i in range(len(matrix)):
-        output_result(matrix[i], type_names, exp_names)
-        print()
-
-
-def dump_vertical(matrix, exp_names):
     matrix = np.transpose(matrix, [0, 2, 1, 3])
     assert len(matrix) == len(exp_names)
     ret = []
@@ -109,9 +86,7 @@ def main():
         fn = os.path.join('outputs', name, name + '_acc.txt')
         terms.append(load(fn))
     matrix = np.asarray(terms)
-
-    # dump(matrix, exp_names)
-    dump_vertical(matrix, exp_names)
+    dump(matrix, exp_names)
 
 
 if __name__ == '__main__':
