@@ -19,6 +19,16 @@ Please download data and put to corresponding folder.
     # Scripts in scripts/zeroshot
     sh scripts/batch.sh scripts/zeroshot/zeroshot_apy.sh
 
+### Training process
+
+    # Scripts in scripts/partition-t_main
+    sh scripts/batch.sh scripts/partition-t_main/partition-t_dnn.sh
+
+### New classes
+
+    # Scripts in scripts/single
+    sh scripts/batch.sh scripts/single/single_dnn.sh
+
 ### Equally difficult factors
 
     # Scripts in scripts/equal
@@ -33,8 +43,7 @@ Please download data and put to corresponding folder.
 
     python3 plot_results.py --experiment_id main_dnn --show_legend
 
-## Plot training process
-
+### training process
     python3 plot_results.py --experiment_id main_dnn --experiment_type steps --show_legend
 
 ## Visualized examples
