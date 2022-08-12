@@ -30,12 +30,12 @@ fi
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 for RANDOM_SEED in $(seq 5); do
-  for N_COMMON_LAYERS in ${LAYERS}; do
-    N_SEPARATE_LAYERS=$((DEPTH - N_COMMON_LAYERS))
+  for N_SHARED_LAYERS in ${LAYERS}; do
+    N_INDIVIDUAL_LAYERS=$((DEPTH - N_SHARED_LAYERS))
     sh "${SCRIPT_DIR}"/wrapper.sh \
       "${SCRIPT}" \
-      "${N_COMMON_LAYERS}" \
-      "${N_SEPARATE_LAYERS}" \
+      "${N_SHARED_LAYERS}" \
+      "${N_INDIVIDUAL_LAYERS}" \
       "${RANDOM_SEED}" \
       "${GPU_ID}"
   done

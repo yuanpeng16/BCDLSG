@@ -9,7 +9,7 @@ class AbstractModelGenerator(object):
         self.args = args
         self.input_shape = input_shape
         self.output_nodes = output_nodes
-        self.depth = self.args.n_common_layers + self.args.n_separate_layers
+        self.depth = self.args.n_shared_layers + self.args.n_individual_layers
         self.vocab_size = 0
 
     def convert_input(self, x):
@@ -41,7 +41,7 @@ class AbstractModelGenerator(object):
 
     def get_main_model(self, x):
         x = self.convert_input(x)
-        for i in range(self.args.n_common_layers):
+        for i in range(self.args.n_shared_layers):
             x = self.get_one_layer(self.args.n_hidden_nodes, x, i, 0)
         x1, x2 = x, x
 
@@ -51,8 +51,8 @@ class AbstractModelGenerator(object):
             h1 = self.args.n_hidden_nodes // 2
             h2 = self.args.n_hidden_nodes - h1
 
-        for i in range(self.args.n_separate_layers):
-            index = self.args.n_common_layers + i
+        for i in range(self.args.n_individual_layers):
+            index = self.args.n_shared_layers + i
             x1 = self.get_one_layer(h1, x1, index, 1)
             x2 = self.get_one_layer(h2, x2, index, 2)
         return x1, x2
@@ -94,7 +94,7 @@ class AbstractModelGenerator(object):
 class AbstractSingleModelGenerator(AbstractModelGenerator):
     def get_main_model(self, x):
         x = self.convert_input(x)
-        for i in range(self.args.n_common_layers):
+        for i in range(self.args.n_shared_layers):
             x = self.get_one_layer(self.args.n_hidden_nodes, x, i, 0)
         x_list = [x] * self.output_nodes
 
@@ -104,8 +104,8 @@ class AbstractSingleModelGenerator(AbstractModelGenerator):
             h_size = self.args.n_hidden_nodes // self.output_nodes
         h_list = [h_size] * self.output_nodes
 
-        for i in range(self.args.n_separate_layers):
-            index = self.args.n_common_layers + i
+        for i in range(self.args.n_individual_layers):
+            index = self.args.n_shared_layers + i
             x_list = [self.get_one_layer(h, x, index, j + 1) for j, [h, x] in
                       enumerate(zip(h_list, x_list))]
         return x_list

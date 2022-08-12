@@ -48,16 +48,16 @@ class SeparatedEncoderStack(EncoderStack):
     def build(self, input_shape):
         """Builds the encoder stack."""
         params = self.params
-        if params["n_common_layers"] == 0:
-            n_common_layers = params["n_common_layers"]
-            n_separate_layers = params["n_separate_layers"] - 1
+        if params["n_shared_layers"] == 0:
+            n_shared_layers = params["n_shared_layers"]
+            n_individual_layers = params["n_individual_layers"] - 1
         else:
-            n_common_layers = params["n_common_layers"] - 1
-            n_separate_layers = params["n_separate_layers"]
-        assert n_common_layers + n_separate_layers > 0
-        self.common_layers.extend(self.get_layers(n_common_layers))
-        self.separate_layers1.extend(self.get_layers(n_separate_layers))
-        self.separate_layers2.extend(self.get_layers(n_separate_layers))
+            n_shared_layers = params["n_shared_layers"] - 1
+            n_individual_layers = params["n_individual_layers"]
+        assert n_shared_layers + n_individual_layers > 0
+        self.common_layers.extend(self.get_layers(n_shared_layers))
+        self.separate_layers1.extend(self.get_layers(n_individual_layers))
+        self.separate_layers2.extend(self.get_layers(n_individual_layers))
 
         # Create final layer normalization layer.
         self.output_list = []
@@ -141,7 +141,7 @@ class SeparateTransformer(Transformer):
         super(Transformer, self).__init__(name=name)
         self.params = params
         self.softmax_list = []
-        if params['n_common_layers'] == 0:
+        if params['n_shared_layers'] == 0:
             copies = 2
         else:
             copies = 1
@@ -231,15 +231,15 @@ class SeparateTransformer(Transformer):
                 training=training)
 
 
-def get_transformer_model(x, hn, n_common_layers, n_separate_layers,
+def get_transformer_model(x, hn, n_shared_layers, n_individual_layers,
                           vocab_size):
     params = {
         'vocab_size': vocab_size,
         'hidden_size': hn,
         'dtype': tf.float32,
         'layer_postprocess_dropout': 0.5,
-        'n_common_layers': n_common_layers,
-        'n_separate_layers': n_separate_layers,
+        'n_shared_layers': n_shared_layers,
+        'n_individual_layers': n_individual_layers,
         'num_heads': 8,
         'attention_dropout': 0.5,
         'filter_size': hn,
@@ -253,5 +253,5 @@ def get_transformer_model(x, hn, n_common_layers, n_separate_layers,
 class TransformerGenerator(AbstractModelGenerator):
     def get_main_model(self, x):
         return get_transformer_model(
-            x, self.args.n_hidden_nodes, self.args.n_common_layers,
-            self.args.n_separate_layers, self.vocab_size)
+            x, self.args.n_hidden_nodes, self.args.n_shared_layers,
+            self.args.n_individual_layers, self.vocab_size)

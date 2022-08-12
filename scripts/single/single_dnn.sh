@@ -2,12 +2,12 @@
 
 if [ $# = 5 ]; then
   LOG_DIR=$1
-  N_COMMON_LAYERS=$2
-  N_SEPARATE_LAYERS=$3
+  N_SHARED_LAYERS=$2
+  N_INDIVIDUAL_LAYERS=$3
   RANDOM_SEED=$4
   GPU_ID=$5
 else
-  echo log_dir, n_common_layers, n_separate_layers, random_seed, and gpu_id.
+  echo log_dir, n_shared_layers, n_individual_layers, random_seed, and gpu_id.
   exit
 fi
 
@@ -24,8 +24,8 @@ echo \
   --lr 0.001 \
   --steps 2000 \
   --n_hidden_nodes 510 \
-  --n_common_layers "${N_COMMON_LAYERS}" \
-  --n_separate_layers "${N_SEPARATE_LAYERS}" \
+  --n_shared_layers "${N_SHARED_LAYERS}" \
+  --n_individual_layers "${N_INDIVIDUAL_LAYERS}" \
   --dataset1 fashion_mnist \
   --dataset2 mnist \
   --label_split diagonal \

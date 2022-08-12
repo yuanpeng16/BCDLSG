@@ -87,9 +87,9 @@ if __name__ == '__main__':
                         help='Random seed.')
     parser.add_argument('--parameter_random_seed', type=int, default=7,
                         help='Random seed.')
-    parser.add_argument('--n_common_layers', type=int, default=2,
+    parser.add_argument('--n_shared_layers', type=int, default=2,
                         help='Number of hidden layer.')
-    parser.add_argument('--n_separate_layers', type=int, default=1,
+    parser.add_argument('--n_individual_layers', type=int, default=1,
                         help='Number of hidden layer.')
     parser.add_argument('--n_hidden_nodes', type=int, default=32,
                         help='Number of nodes in hidden layer.')

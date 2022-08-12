@@ -8,15 +8,15 @@ else
 fi
 
 if [ $# -gt 1 ]; then
-  N_COMMON_LAYERS=$2
+  N_SHARED_LAYERS=$2
 else
-  N_COMMON_LAYERS=0
+  N_SHARED_LAYERS=0
 fi
 
 if [ $# -gt 2 ]; then
-  N_SEPARATE_LAYERS=$3
+  N_INDIVIDUAL_LAYERS=$3
 else
-  N_SEPARATE_LAYERS=7
+  N_INDIVIDUAL_LAYERS=7
 fi
 
 if [ $# -gt 3 ]; then
@@ -35,14 +35,14 @@ ID=$(basename "${SCRIPT}" | sed "s/.sh$//g")
 ABS_PATH=$(readlink -f "${SCRIPT}")
 cd "$(dirname "$(dirname "$(dirname "${ABS_PATH}")")")" || exit
 
-LOG_DIR="logs/${ID}/${ID}_${N_COMMON_LAYERS}_${N_SEPARATE_LAYERS}_${RANDOM_SEED}"
+LOG_DIR="logs/${ID}/${ID}_${N_SHARED_LAYERS}_${N_INDIVIDUAL_LAYERS}_${RANDOM_SEED}"
 mkdir -p "${LOG_DIR}"
 cp "${ABS_PATH}" "${LOG_DIR}"
 
 command=$(sh "${SCRIPT}" \
   "${LOG_DIR}" \
-  "${N_COMMON_LAYERS}" \
-  "${N_SEPARATE_LAYERS}" \
+  "${N_SHARED_LAYERS}" \
+  "${N_INDIVIDUAL_LAYERS}" \
   "${RANDOM_SEED}" \
   "${GPU_ID}")
 
