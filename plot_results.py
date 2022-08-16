@@ -27,9 +27,8 @@ def draw_figure(args, lists, stds, legends, basedir, colors, lw, loc, labels,
     ax = plt.subplot(1, 1, 1)
     ax.tick_params(axis='both', which='major', labelsize=font_size)
 
-    for i, (l, s, legend) in enumerate(zip(lists, stds, legends)):
-        color_index = min(i, len(colors) - 1)
-        entries = colors[color_index]
+    for i, (l, s, legend, entries) in enumerate(
+            zip(lists, stds, legends, colors)):
         color, marker = entries
         l1 = np.asarray(l)
         s1 = np.asarray(s)
@@ -113,10 +112,10 @@ def get_params(args):
 
     if args.experiment_type == 'main':
         pairs = [
-            ('Eval Sample Acc.', ('b', 'v')),
-            ('Test Sample Acc.', ('c', '^')),
-            ('Test Set Acc.', ('r', 's')),
-            ('Rnd. Set Acc.', ('brown', 'D')),
+            ('Eval Sample Acc.', ('brown', 'D')),
+            ('Test Sample Acc.', ('b', 'v')),
+            ('Test Set Acc.', ('c', '^')),
+            ('Rnd. Set Acc.', ('r', 's')),
         ]
         out_name = eid + 'acc'
     elif args.experiment_type == 'steps':
@@ -178,6 +177,7 @@ def final_main(args):
     acc_mean = eval_lists[1:]
     acc_std = std_lists[1:]
     legends = legends[1:]
+    colors = colors[1:]
     write_draw(args, acc_mean, acc_std, legends, output_name, colors, lw,
                loc, labels, 'Accuracy (%)', 'Shared-Individual Layer Depths')
 
