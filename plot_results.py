@@ -32,16 +32,12 @@ def draw_figure(args, lists, stds, legends, basedir, colors, lw, loc, labels,
         color, marker = entries
         l1 = np.asarray(l)
         s1 = np.asarray(s)
-        if i % 2 == 0:
-            ls = '-'
-        else:
-            ls = '--'
-        ax.plot(l1, lw=lw, markevery=(0, 1),
-                ls=ls,
-                marker=marker, markersize=16, markeredgewidth=2,
-                markerfacecolor='none', color=color, label=legend)
-        ax.fill_between(np.arange(x_lim), l1 - s1, l1 + s1,
-                        color=color, alpha=0.2)
+        ls = '-' if i % 2 == 0 else '--'
+        ax.plot(l1, lw=lw, markevery=(0, 1), ls=ls, marker=marker,
+                markersize=16, markeredgewidth=2, markerfacecolor='none',
+                color=color, label=legend)
+        ax.fill_between(np.arange(x_lim), l1 - s1, l1 + s1, color=color,
+                        alpha=0.2)
 
     ax.set_xlim([0, x_lim - 1])
     ax.set_xticks(range(x_lim))
@@ -52,8 +48,7 @@ def draw_figure(args, lists, stds, legends, basedir, colors, lw, loc, labels,
     ax.yaxis.labelpad = 5
 
     if args.show_legend:
-        legend_font_size = font_size
-        ax.legend(loc=loc, prop={'size': legend_font_size})
+        ax.legend(loc=loc, prop={'size': font_size})
 
     plt.savefig(basedir + '.pdf', bbox_inches='tight', pad_inches=0.01)
 
