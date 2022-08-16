@@ -1,7 +1,36 @@
 import tensorflow as tf
 import numpy as np
 
-from data import one_hot
+
+def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
+    if args.adversarial:
+        if args.any_generalization:
+            ev = RandomAdversarialEvaluator(
+                args, model, datasets, large_datasets, test_label_pairs)
+        else:
+            ev = AdversarialEvaluator(
+                args, model, datasets, large_datasets, test_label_pairs)
+    elif args.evaluator_type == 'partition':
+        ev = PartitionEvaluator(args, model, datasets, large_datasets,
+                                test_label_pairs)
+    elif args.evaluator_type == 'partition-f':
+        ev = FilteredPartitionEvaluator(args, model, datasets, large_datasets,
+                                        test_label_pairs)
+    elif args.evaluator_type == 'partition-t':
+        ev = ThresholdPartitionEvaluator(args, model, datasets, large_datasets,
+                                         test_label_pairs)
+    elif args.evaluator_type == 'single':
+        ev = SingleEvaluator(args, model, datasets, large_datasets,
+                             test_label_pairs)
+    else:
+        ev = Evaluator(args, model, datasets, large_datasets, test_label_pairs)
+    return ev
+
+
+def one_hot(a, output_nodes):
+    ret = [0] * output_nodes
+    ret[a] = 1
+    return ret
 
 
 def get_entropy(counts, normalize=True):
@@ -27,31 +56,6 @@ def get_perplexity(counts):
     entropy = get_entropy(count_list)
     perplexity = 2 ** entropy
     return perplexity
-
-
-def get_evaluator(args, model, datasets, large_datasets, test_label_pairs):
-    if args.adversarial:
-        if args.any_generalization:
-            ev = RandomAdversarialEvaluator(
-                args, model, datasets, large_datasets, test_label_pairs)
-        else:
-            ev = AdversarialEvaluator(
-                args, model, datasets, large_datasets, test_label_pairs)
-    elif args.evaluator_type == 'partition':
-        ev = PartitionEvaluator(args, model, datasets, large_datasets,
-                                test_label_pairs)
-    elif args.evaluator_type == 'partition-f':
-        ev = FilteredPartitionEvaluator(args, model, datasets, large_datasets,
-                                        test_label_pairs)
-    elif args.evaluator_type == 'partition-t':
-        ev = ThresholdPartitionEvaluator(args, model, datasets, large_datasets,
-                                         test_label_pairs)
-    elif args.evaluator_type == 'single':
-        ev = SingleEvaluator(args, model, datasets, large_datasets,
-                               test_label_pairs)
-    else:
-        ev = Evaluator(args, model, datasets, large_datasets, test_label_pairs)
-    return ev
 
 
 class Evaluator(object):
