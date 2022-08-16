@@ -115,8 +115,8 @@ def get_params(args):
         out_name = eid + 'acc'
     elif args.experiment_type == 'steps':
         pairs = [
-            ('OOD Area', ('b', '')),
-            ('Random Area', ('r', '')),
+            ('Test Set Acc.', ('c', '')),
+            ('Rnd. Set Acc.', ('r', '')),
         ]
         out_name = eid + 'steps_acc'
     else:
@@ -227,8 +227,11 @@ def main(args):
 
     if args.experiment_type == 'main':
         final_main(args)
-    else:
+    elif args.experiment_type == 'steps':
         step_main(args)
+    else:
+        raise ValueError(
+            '{0} is not a valid experiment_type.'.format(args.experiment_type))
 
 
 if __name__ == '__main__':
