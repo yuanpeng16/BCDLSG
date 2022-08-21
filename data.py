@@ -292,10 +292,10 @@ class TextDataGenerator(RandomDataGenerator):
         else:
             self.output_nodes = 10
 
-        maxlen = 200
-        self.max_length = 2 * maxlen + 1
-        train1, test1, self.shape1 = self._get_data(args.dataset1, maxlen)
-        train2, test2, self.shape2 = self._get_data(args.dataset2, maxlen)
+        self.maxlen = 200
+        self.max_length = 2 * self.maxlen + 1
+        train1, test1, self.shape1 = self._get_data(args.dataset1, self.maxlen)
+        train2, test2, self.shape2 = self._get_data(args.dataset2, self.maxlen)
         self.input_shape = self.compute_input_shape()
 
         inputs = [train1[0], test1[0], train2[0], test2[0]]
@@ -383,16 +383,26 @@ class TextDataGenerator(RandomDataGenerator):
         padded_x = np.array(x + ([0] * (self.max_length - len(x))))
         return padded_x
 
+    def _get_random_input(self):
+        length1 = np.random.randint(1, high=self.maxlen)
+        length2 = np.random.randint(1, high=self.maxlen)
+        x1 = [1] + np.random.randint(2, high=self.vocab_size,
+                                     size=length1).tolist()
+        x2 = [1] + np.random.randint(2, high=self.vocab_size,
+                                     size=length2).tolist()
+        x = x1 + x2
+        padding = [0] * (self.max_length - len(x))
+        x = x + padding
+        return x
+
     def get_test_samples(self, k, randomize=False):
         samples, y_list = self._get_samples(
             self.test_samples1, self.test_samples2, k, is_train=False)
         if randomize:
-            shape = samples.shape
-            for i in range(shape[0]):
-                for j in range(shape[1]):
-                    if samples[i][j] > 1:
-                        samples[i][j] = np.random.randint(
-                            2, high=self.vocab_size)
+            random_samples = []
+            for i in range(samples.shape[0]):
+                random_samples.append(self._get_random_input())
+            samples = np.array(random_samples)
         return samples, y_list
 
 
