@@ -43,7 +43,7 @@ Please download data and put to corresponding folder.
 
     python3 plot_results.py --experiment_id main_dnn --show_legend
 
-### training process
+### Training process
 
     python3 plot_analysis.py --experiment_id partition-t_main_dnn
 
