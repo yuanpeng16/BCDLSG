@@ -174,7 +174,7 @@ def final_main(args):
     legends = legends[1:]
     colors = colors[1:]
     write_draw(args, acc_mean, acc_std, legends, output_name, colors, lw,
-               loc, labels, 'Accuracy (%)', 'Shared-Individual Layer Depths')
+               loc, labels, 'Accuracy (%)', 'Shared-Individual Network Depths')
 
 
 def get_step_results(args, path):
