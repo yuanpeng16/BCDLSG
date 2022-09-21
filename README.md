@@ -46,7 +46,3 @@ Please download data and put to corresponding folder.
 ### Training process
 
     python3 plot_analysis.py --experiment_id partition-t_main_dnn
-
-## Visualized examples
-
-Please visit https://github.com/yuanpeng16/multilabel_playground
