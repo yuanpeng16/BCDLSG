@@ -18,6 +18,8 @@ def get_data_generator(args):
         dg = StackedDataGenerator(args)
     elif args.merge_type == 'added':
         dg = AddedDataGenerator(args)
+    elif args.merge_type == 'average':
+        dg = AverageDataGenerator(args)
     elif args.merge_type == 'max':
         dg = MaxDataGenerator(args)
     elif args.merge_type == 'text':
@@ -440,6 +442,71 @@ class SingleDataGenerator(RandomDataGenerator):
     def _merge(self, y, y2, samples1, samples2):
         x1 = random.choice(samples1[y])
         return x1
+
+
+class AverageDataGenerator(RandomDataGenerator):
+    def __init__(self, args):
+        self.args = args
+        self.output_nodes = 10
+
+        train1, test1, self.shape1 = self._get_data(args.dataset1)
+        train2, test2, self.shape2 = train1, test1, self.shape1
+        rotate = args.rotate_second_input
+        if rotate:
+            self.shape2 = (self.shape2[1], self.shape2[0], self.shape2[2])
+        self.input_shape = self.compute_input_shape()
+
+        if self.args.input_permutation:
+            size = np.prod(self.input_shape)
+            self.permutation_mapping = list(range(size))
+            random.shuffle(self.permutation_mapping)
+
+        train = [np.concatenate([train1[i], test1[i]], 0) for i in range(2)]
+
+        # Preprocessing
+        self.train_samples1 = self._prepare_data(train, False)
+        self.test_samples1 = self.train_samples1
+        self.train_samples2 = self.train_samples1
+        self.test_samples2 = self.test_samples1
+
+        self.train_label_pairs = []
+        self.test_label_pairs = []
+        self.get_label_splits()
+        self.all_train_pairs = self.train_label_pairs + self.test_label_pairs
+
+    def _prepare_data(self, data, rotate):
+        x_all, y_all = data
+        assert len(x_all) == len(y_all)
+        x_all = x_all / 255.0 - 0.5
+        x_all = x_all.astype("float32")
+
+        a_all = [np.average(x) for x in x_all]
+        min_a = min(a_all)
+        max_a = max(a_all)
+        delta = 0.1 * (max_a - min_a)
+        max_a -= delta
+        min_a += delta
+
+        data = [[[] for _ in range(self.output_nodes)] for _ in
+                range(self.output_nodes)]
+        for x, y, a in zip(x_all, y_all, a_all):
+            y = int(y)
+            a = min(a, max_a)
+            a = max(a, min_a)
+            c = int(self.output_nodes * (a - min_a) / (max_a - min_a))
+            if c == self.output_nodes:
+                c = self.output_nodes - 1
+            data[y][c].append(x)
+        return data
+
+    def _merge(self, y, y2, samples1, samples2):
+        return random.choice(samples1[y][y2])
+
+    def compute_input_shape(self):
+        return self.compute_one_input_shape()
+
+    def compute_one_input_shape(self):
+        return self.shape1
 
 
 class LengthDataGenerator(TextDataGenerator):
