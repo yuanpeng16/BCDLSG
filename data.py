@@ -22,6 +22,8 @@ def get_data_generator(args):
         dg = MaxDataGenerator(args)
     elif args.merge_type == 'text':
         dg = TextDataGenerator(args)
+    elif args.merge_type == 'length':
+        dg = LengthDataGenerator(args)
     elif args.merge_type == 'zero_shot_apy':
         dg = APYDataGenerator(args)
     elif args.merge_type == 'zeroshot_awa2':
@@ -438,3 +440,60 @@ class SingleDataGenerator(RandomDataGenerator):
     def _merge(self, y, y2, samples1, samples2):
         x1 = random.choice(samples1[y])
         return x1
+
+
+class LengthDataGenerator(TextDataGenerator):
+    def __init__(self, args):
+        self.args = args
+        if args.dataset1 == 'imdb':
+            self.output_nodes = 2
+        else:
+            self.output_nodes = 10
+
+        self.maxlen = 200
+        self.max_length = self.maxlen + 1
+        train1, test1, self.shape1 = self._get_data(args.dataset1, self.maxlen)
+        train2, test2, self.shape2 = train1, test1, self.shape1
+        self.input_shape = self.compute_input_shape()
+
+        inputs = [train1[0], test1[0]]
+        self.vocab_size = max(max([max(x) for x in xs]) for xs in inputs) + 1
+
+        train = [np.concatenate([train1[i], test1[i]], 0) for i in range(2)]
+        # Preprocessing
+        self.train_samples1 = self._prepare_data(train)
+        self.test_samples1 = self.train_samples1
+        self.train_samples2 = self.train_samples1
+        self.test_samples2 = self.test_samples1
+
+        self.train_label_pairs = []
+        self.test_label_pairs = []
+        self.get_label_splits()
+
+    def _prepare_data(self, data):
+        x_all, y_all = data
+        assert len(x_all) == len(y_all)
+
+        data = [[[] for _ in range(self.output_nodes)] for _ in
+                range(self.output_nodes)]
+        for x, y in zip(x_all, y_all):
+            y = int(y)
+            l = len(x)
+            if l < 50:
+                a = 0
+            else:
+                a = (l - 50) // 15
+            padded_x = np.array(x + ([0] * (self.max_length - len(x))))
+            data[y][a].append(padded_x)
+        return data
+
+    def _merge(self, y, y2, samples1, samples2):
+        return random.choice(samples1[y][y2])
+
+    def _get_random_input(self):
+        length = np.random.randint(1, high=self.maxlen)
+        x = [1] + np.random.randint(2, high=self.vocab_size,
+                                    size=length).tolist()
+        padding = [0] * (self.max_length - len(x))
+        x = x + padding
+        return x
