@@ -20,6 +20,8 @@ def get_data_generator(args):
         dg = AddedDataGenerator(args)
     elif args.merge_type == 'average':
         dg = AverageDataGenerator(args)
+    elif args.merge_type == 'dnn_average':
+        dg = DNNAverageDataGenerator(args)
     elif args.merge_type == 'max':
         dg = MaxDataGenerator(args)
     elif args.merge_type == 'text':
@@ -474,6 +476,11 @@ class AverageDataGenerator(RandomDataGenerator):
         self.get_label_splits()
         self.all_train_pairs = self.train_label_pairs + self.test_label_pairs
 
+    def get_thresholds(self, max_a, min_a, delta):
+        max_a -= delta
+        min_a += delta
+        return max_a, min_a
+
     def _prepare_data(self, data, rotate):
         x_all, y_all = data
         assert len(x_all) == len(y_all)
@@ -484,8 +491,7 @@ class AverageDataGenerator(RandomDataGenerator):
         min_a = min(a_all)
         max_a = max(a_all)
         delta = 0.1 * (max_a - min_a)
-        max_a -= delta
-        min_a += delta
+        max_a, min_a = self.get_thresholds(max_a, min_a, delta)
 
         data = [[[] for _ in range(self.output_nodes)] for _ in
                 range(self.output_nodes)]
@@ -507,6 +513,13 @@ class AverageDataGenerator(RandomDataGenerator):
 
     def compute_one_input_shape(self):
         return self.shape1
+
+
+class DNNAverageDataGenerator(AverageDataGenerator):
+    def get_thresholds(self, max_a, min_a, delta):
+        max_a -= 4 * delta
+        min_a += delta
+        return max_a, min_a
 
 
 class LengthDataGenerator(TextDataGenerator):
