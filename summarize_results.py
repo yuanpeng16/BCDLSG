@@ -17,8 +17,8 @@ def load_file(fn):
 
 def get_line(line):
     line = line[1:]
-    mean = line[1:4]
-    std = line[6:9]
+    mean = line[2:5]
+    std = line[7:10]
     sample_acc = mean[0], std[0]
     set_acc = mean[1], std[1]
     random_acc = mean[2], std[2]

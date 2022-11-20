@@ -3,6 +3,7 @@ import argparse
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import rc
+# from brokenaxes import brokenaxes
 
 
 def write_to_file(lists, stds, basedir):
@@ -18,6 +19,55 @@ def write_to_file(lists, stds, basedir):
             for e in stds:
                 f.write('\t' + str(e[i]))
             f.write('\n')
+
+
+def draw_figure_broken(args, lists, stds, legends, basedir, colors, lw, loc,
+                       labels, v_name, u_name, font_size=24):
+    x_lim = len(lists[0])
+    plt.figure(figsize=(9, 6))
+
+    ls = np.asarray(lists)
+    ss = np.asarray(stds)
+    lower = np.min(ls[:2] - ss[:2]) - 5
+    upper = np.max(ls[2:] + ss[2:]) + 5
+    if upper > lower:
+        ylims = ((-1, 45), (85, 100))
+    else:
+        ylims = ((-1, upper), (lower, 100))
+
+    # ax = brokenaxes(subplot_spec=None, ylims=ylims, hspace=.05)
+    ax = None
+
+    ax.tick_params(axis='both', which='major', labelsize=font_size)
+
+    for i, (l, s, legend, entries) in enumerate(
+            zip(lists, stds, legends, colors)):
+        color, marker = entries
+        l1 = np.asarray(l)
+        s1 = np.asarray(s)
+        ls = '-' if i % 2 == 0 else '--'
+        ax.plot(l1, lw=lw, markevery=(0, 1), ls=ls, marker=marker,
+                markersize=16, markeredgewidth=2, markerfacecolor='none',
+                color=color, label=legend)
+        ax.fill_between(np.arange(x_lim), l1 - s1, l1 + s1, color=color,
+                        alpha=0.2)
+
+    ax.set_xlim([0, x_lim - 1])
+    ax.set_xticklabels([''] + labels)
+    ax.set_xticks(range(x_lim))
+    # ax.set_xlabel(u_name, fontsize=font_size)
+    # ax.set_ylabel(v_name, fontsize=font_size)
+    # ax.xaxis.labelpad = 5
+    # ax.yaxis.labelpad = 5
+
+    if args.show_legend:
+        if args.legend_font_size < 0:
+            legend_font = font_size
+        else:
+            legend_font = args.legend_font_size
+        ax.legend(loc=loc, prop={'size': legend_font})
+
+    plt.savefig(basedir + '.pdf', bbox_inches='tight', pad_inches=0.01)
 
 
 def draw_figure(args, lists, stds, legends, basedir, colors, lw, loc, labels,
@@ -48,7 +98,11 @@ def draw_figure(args, lists, stds, legends, basedir, colors, lw, loc, labels,
     ax.yaxis.labelpad = 5
 
     if args.show_legend:
-        ax.legend(loc=loc, prop={'size': font_size})
+        if args.legend_font_size < 0:
+            legend_font = font_size
+        else:
+            legend_font = args.legend_font_size
+        ax.legend(loc=loc, prop={'size': legend_font})
 
     plt.savefig(basedir + '.pdf', bbox_inches='tight', pad_inches=0.01)
 
@@ -81,7 +135,8 @@ def load(fn, steps=False):
         with open(fn, 'r') as f:
             lines = f.readlines()
         lines = [x.strip().split(' ') for x in lines]
-        index = [3, 8, 9, 14]
+        lines = [x for x in lines if not x[0] == 'loading']
+        index = [3, 18, 8, 9, 14]
         steps = get_list_index(lines)
         eval_list = [get_list(lines, i) for i in index]
     else:
@@ -103,11 +158,12 @@ def get_params(args):
     log_dir = os.path.join('logs', args.experiment_id)
     file_list = [os.path.join(log_dir, eid + c + '_') for c in ids]
     lw = 2
-    loc = 'upper right'
+    loc = 'best'
 
     if args.experiment_type == 'main':
         pairs = [
-            ('Eval Sample Acc.', ('brown', 'D')),
+            ('Train Sample Acc.', ('brown', 'D')),
+            ('I.I.D. Sample Acc.', ('orange', 'D')),
             ('Test Sample Acc.', ('b', 'v')),
             ('Test Set Acc.', ('c', '^')),
             ('Rnd. Set Acc.', ('r', 's')),
@@ -135,7 +191,7 @@ def get_results(args, path):
         exp_ids = ['1']
     else:
         exp_ids = ['1', '2', '3', '4', '5']
-    results = [[], [], [], []]
+    results = [[], [], [], [], []]
     for e in exp_ids:
         fn = os.path.join(path + e, "log.txt")
         eval_list, _ = load(fn)
@@ -155,8 +211,8 @@ def get_results(args, path):
 
 def final_main(args):
     file_list, legends, output_name, colors, lw, loc, labels = get_params(args)
-    eval_lists = [[], [], [], []]
-    std_lists = [[], [], [], []]
+    eval_lists = [[], [], [], [], []]
+    std_lists = [[], [], [], [], []]
 
     for fn in file_list:
         means, stds = get_results(args, fn)
@@ -169,10 +225,8 @@ def final_main(args):
         for std_list, std in zip(std_lists, stds):
             std_list.append(std)
 
-    acc_mean = eval_lists[1:]
-    acc_std = std_lists[1:]
-    legends = legends[1:]
-    colors = colors[1:]
+    acc_mean = eval_lists
+    acc_std = std_lists
     write_draw(args, acc_mean, acc_std, legends, output_name, colors, lw,
                loc, labels, 'Accuracy (%)', 'Shared-Individual Network Depths')
 
@@ -248,4 +302,6 @@ if __name__ == '__main__':
                         help='Visualize first experiment.')
     parser.add_argument('--show_legend', action='store_true',
                         default=False, help='Show legend.')
+    parser.add_argument('--legend_font_size', type=int, default=15,
+                        help='Number of horizontal points to plot.')
     main(parser.parse_args())
