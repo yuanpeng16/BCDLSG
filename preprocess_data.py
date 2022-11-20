@@ -79,11 +79,53 @@ class SUNDataPreprocessor(AbstractDataPreprocessor):
         return names
 
 
+class NICODataPreprocessor(AbstractDataPreprocessor):
+    def get_categories(self):
+        with open('category.txt', 'r') as f:
+            lines = f.readlines()
+        names = lines[0].split('\t')
+        categories = [[] for _ in range(len(names) - 1)]
+        for line in lines[1:]:
+            line = line.strip()
+            if len(line) == 0:
+                continue
+            terms = line.strip().split('\t')
+            categories[len(terms) - 2].append(terms[0])
+        return categories
+
+    def convert(self):
+        dataset_dir = '../../data/nico/track_1'
+        background_names = ['autumn', 'dim', 'grass', 'rock', 'water']
+        foreground_names = self.get_categories()
+        return self.load_data(dataset_dir, background_names, foreground_names)
+
+    def load_data(self, dataset_dir, background_names, foreground_names):
+        matrix = [[] for _ in background_names]
+        for i, background_name in enumerate(background_names):
+            background_folder = os.path.join(dataset_dir, background_name)
+            for j, foreground_name_list in enumerate(foreground_names):
+                images = []
+                for foreground_name in foreground_name_list:
+                    path = os.path.join(background_folder, foreground_name)
+                    files = os.listdir(path)
+                    for file_name in files:
+                        fn = os.path.join(path, file_name)
+                        image = self.load_an_image(fn)
+                        images.append(image)
+                matrix[i].append(np.asarray(images))
+                print(i, j)
+        matrix = np.asarray(matrix, dtype=object)
+        fn_f = os.path.join(dataset_dir, 'feat.npy')
+        matrix.dump(fn_f)
+
+
 def main(args):
     if args.dataset == 'cub':
         proc = CUBDataPreprocessor(args)
     elif args.dataset == 'sun':
         proc = SUNDataPreprocessor(args)
+    elif args.dataset == 'nico':
+        proc = NICODataPreprocessor(args)
     else:
         raise ValueError('{0} is not a valid dataset.'.format(args.dataset))
     proc.convert()
@@ -91,7 +133,7 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset', type=str, default='cub', help='Dataset.')
+    parser.add_argument('--dataset', type=str, default='nico', help='Dataset.')
     parser.add_argument('--dataset_dir', type=str,
                         default='../../data/zeroshot_datasets',
                         help='Dataset directory.')
