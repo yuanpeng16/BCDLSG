@@ -1,4 +1,5 @@
 import os
+import argparse
 import numpy as np
 
 
@@ -16,8 +17,8 @@ def load_file(fn):
 
 def get_line(line):
     line = line[1:]
-    mean = line[:3]
-    std = line[3:]
+    mean = line[1:4]
+    std = line[6:9]
     sample_acc = mean[0], std[0]
     set_acc = mean[1], std[1]
     random_acc = mean[2], std[2]
@@ -55,26 +56,46 @@ def dump(matrix, exp_names):
     format_print(ret)
 
 
-def main():
-    all_names = [
-        ['DNN', 'main_dnn'],
-        ['CNN', 'main_cnn'],
-        ['ResNet', 'main_resnet'],
-        ['ViT', 'main_vit'],
-        ['LSTM', 'main_lstm'],
-        ['LSTM-1', 'main_lstm-1'],
-        ['Transformer', 'main_transformer'],
-        ['aPY', 'zeroshot_apy'],
-        ['AwA2', 'zeroshot_awa2'],
-        ['CUB', 'zeroshot_cub'],
-        ['SUN', 'zeroshot_sun'],
-        ['DNN', 'equal_dnn'],
-        ['CNN', 'equal_cnn'],
-        ['Tile', 'label_tile'],
-        ['Oneshot', 'label_oneshot'],
-        ['Single DNN', 'single_dnn'],
-        ['Single CNN', 'single_cnn'],
-    ]
+def main(args):
+    if args.experiment_set == 'main':
+        all_names = [
+            ['DNN', 'main_dnn'],
+            ['CNN', 'main_cnn'],
+            ['ResNet', 'main_resnet'],
+            ['ViT', 'main_vit'],
+            ['LSTM', 'main_lstm'],
+            ['LSTM-1', 'main_lstm-1'],
+            ['Transformer', 'main_transformer'],
+            ['aPY', 'zeroshot_apy'],
+            ['AwA2', 'zeroshot_awa2'],
+            ['CUB', 'zeroshot_cub'],
+            ['SUN', 'zeroshot_sun'],
+            ['DNN', 'equal_dnn'],
+            ['CNN', 'equal_cnn'],
+            ['Tile', 'label_tile'],
+            ['Oneshot', 'label_oneshot'],
+            ['Single DNN', 'single_dnn'],
+            ['Single CNN', 'single_cnn'],
+        ]
+    elif args.experiment_set == 'natural':
+        all_names = [
+            ['DNN', 'review_dnn'],
+            ['CNN', 'review_cnn'],
+            ['ResNet', 'review_resnet'],
+            ['ViT', 'review_vit'],
+            ['LSTM', 'review_lstm'],
+            ['LSTM-1', 'review_lstm-1'],
+            ['Transformer', 'review_transformer'],
+            ['64', 'ablation_dnn-64'],
+            ['128', 'ablation_dnn-128'],
+            ['512', 'ablation_dnn-512'],
+            ['1024', 'ablation_dnn-1024'],
+            ['Dropout', 'ablation_dnn-dropout'],
+            ['Mixup', 'ablation_dnn-mixup'],
+        ]
+    else:
+        raise ValueError(
+            '{0} is not a valid experiment_set.'.format(args.experiment_set))
     names = [x[1] for x in all_names]
     exp_names = [x[0] for x in all_names]
     terms = []
@@ -86,4 +107,7 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--experiment_set', type=str, default='natural',
+                        help='Experiment set.')
+    main(parser.parse_args())
