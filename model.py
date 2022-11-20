@@ -10,6 +10,8 @@ from separate_vision_transformer import VisionTransformerGenerator
 def get_model_generator(args, input_shape, output_nodes):
     if args.model_type == 'dnn':
         model = DNNModelGenerator(args, input_shape, output_nodes)
+    elif args.model_type == 'dnn_dropout':
+        model = DropoutDNNModelGenerator(args, input_shape, output_nodes)
     elif args.model_type == 'cnn':
         model = CNNModelGenerator(args, input_shape, output_nodes)
     elif args.model_type == 'resnet':
@@ -36,6 +38,12 @@ class DNNModelGenerator(AbstractModelGenerator):
 
     def get_intermediate_layer(self, hn, x):
         return tf.keras.layers.Dense(hn, activation='relu')(x)
+
+
+class DropoutDNNModelGenerator(DNNModelGenerator):
+    def get_intermediate_layer(self, hn, x):
+        x = super().get_intermediate_layer(hn, x)
+        return tf.keras.layers.Dropout(rate=0.1)(x)
 
 
 class CNNModelGenerator(AbstractModelGenerator):

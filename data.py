@@ -22,12 +22,20 @@ def get_data_generator(args):
         dg = AverageDataGenerator(args)
     elif args.merge_type == 'dnn_average':
         dg = DNNAverageDataGenerator(args)
+    elif args.merge_type == 'colored':
+        dg = ColoredDataGenerator(args)
+    elif args.merge_type == 'mixup':
+        dg = MixupColoredDataGenerator(args)
     elif args.merge_type == 'max':
         dg = MaxDataGenerator(args)
     elif args.merge_type == 'text':
         dg = TextDataGenerator(args)
     elif args.merge_type == 'length':
         dg = LengthDataGenerator(args)
+    elif args.merge_type == 'review':
+        dg = ReviewDataGenerator(args)
+    elif args.merge_type == 'nico':
+        dg = NICODataGenerator(args)
     elif args.merge_type == 'zero_shot_apy':
         dg = APYDataGenerator(args)
     elif args.merge_type == 'zeroshot_awa2':
@@ -198,6 +206,9 @@ class RandomDataGenerator(object):
         return self._get_samples(self.train_samples1, self.train_samples2, k,
                                  is_train=True, pretrain=pretrain)
 
+    def get_training_samples_for_evaluation(self, k, pretrain=False):
+        return self.get_training_samples(k, pretrain=False)
+
     def get_eval_samples(self, k):
         return self.get_training_samples(k)
 
@@ -219,6 +230,19 @@ class RandomDataGenerator(object):
 
     def compute_input_shape(self):
         pass
+
+    def prepare_eval_data(self, data):
+        eval_data = [[[] for _ in range(self.output_nodes)] for _ in
+                     range(self.output_nodes)]
+        for i in range(self.output_nodes):
+            for j in range(self.output_nodes):
+                if self.is_train_label(i, j):
+                    samples = data[i][j]
+                    random.shuffle(samples)
+                    threshold = (9 * len(samples)) // 10
+                    data[i][j] = samples[:threshold]
+                    eval_data[i][j] = samples[threshold:]
+        self.eval_data = eval_data
 
 
 class LongDataGenerator(RandomDataGenerator):
@@ -515,11 +539,170 @@ class AverageDataGenerator(RandomDataGenerator):
         return self.shape1
 
 
+class NICODataGenerator(AverageDataGenerator):
+    def __init__(self, args):
+        self.args = args
+        self.output_nodes = 5
+
+        fn = '../../data/nico/track_1/feat.npy'
+        data = np.load(fn, allow_pickle=True)
+
+        self.shape1 = data[0][0][0].shape
+        self.shape2 = self.shape1
+        self.input_shape = self.compute_input_shape()
+
+        # Preprocessing
+        self.train_samples1 = self._prepare_data(data)
+        self.test_samples1 = self.train_samples1
+        self.train_samples2 = self.train_samples1
+        self.test_samples2 = self.test_samples1
+
+        self.train_label_pairs = []
+        self.test_label_pairs = []
+        self.get_label_splits()
+
+        self.prepare_eval_data(self.train_samples1)
+
+    def _prepare_data(self, data):
+        for i in range(len(data)):
+            for j in range(len(data[i])):
+                data[i][j] = data[i][j] / 255.0 - 0.5
+        return data
+
+    def get_eval_samples(self, k):
+        return self._get_samples(self.eval_data, self.eval_data, k,
+                                 is_train=True, pretrain=False)
+
+    def is_train_label(self, x, y):
+        if self.args.label_split == 'tile':
+            return x < 3 or y < 3
+        elif self.args.label_split == 'diagonal':
+            diff = (y - x + self.output_nodes) % self.output_nodes
+            return diff < 3
+        raise ValueError(
+            '{0} is not a valid label_split.'.format(self.args.label_split))
+
+
 class DNNAverageDataGenerator(AverageDataGenerator):
     def get_thresholds(self, max_a, min_a, delta):
         max_a -= 4 * delta
         min_a += delta
         return max_a, min_a
+
+
+class ColoredDataGenerator(AverageDataGenerator):
+    def __init__(self, args):
+        colors = [
+            [0, 0, 1],
+            [0, 1, 0],
+            [0, 1, 1],
+            [1, 0, 0],
+            [1, 0, 1],
+            [1, 1, 0],
+            [1, 1, 1],
+            [0.5, 0, 0],
+            [0.5, 0.5, 0],
+            [0.5, 0.5, 0.5]
+        ]
+        colors = np.asarray(colors)
+        self.colors = np.expand_dims(colors, 1)
+
+        super().__init__(args)
+
+        self.prepare_eval_data(self.train_samples1)
+
+    def _get_data(self, data_name):
+        train, test, shape = super()._get_data(data_name)
+        if shape[-1] == 1:
+            shape = list(shape)
+            shape[-1] = 3
+            shape = tuple(shape)
+        return train, test, shape
+
+    def _prepare_data(self, data, rotate):
+        x_all, y_all = data
+        assert len(x_all) == len(y_all)
+        x_all = x_all / 255.0 - 0.5
+        x_all = x_all.astype("float32")
+
+        data = [[] for _ in range(self.output_nodes)]
+        for x, y in zip(x_all, y_all):
+            y = int(y)
+            data[y].append(x)
+        return data
+
+    def _merge(self, y, y2, samples1, samples2):
+        x = random.choice(samples1[y])
+        x = np.matmul(x, self.colors[y2])
+        return x
+
+    def prepare_eval_data(self, data):
+        eval_data = [[] for _ in range(self.output_nodes)]
+        for i in range(self.output_nodes):
+            samples = data[i]
+            random.shuffle(samples)
+            threshold = (9 * len(samples)) // 10
+            data[i] = samples[:threshold]
+            eval_data[i] = samples[threshold:]
+        self.eval_data = eval_data
+
+    def get_eval_samples(self, k):
+        return self._get_samples(self.eval_data, self.eval_data, k,
+                                 is_train=True, pretrain=False)
+
+
+class MixupColoredDataGenerator(ColoredDataGenerator):
+    def _get_samples(self, samples1, samples2, k, is_train, pretrain=False):
+        if not is_train:
+            return super()._get_samples(samples1, samples2, k, is_train,
+                                        pretrain)
+
+        l = 2 * k
+        if pretrain:
+            label_list = random.choices(self.all_train_pairs, k=l)
+        else:
+            label_list = random.choices(self.train_label_pairs, k=l)
+
+        label_list1 = label_list[:k]
+        label_list2 = label_list[k:]
+
+        x_list, y_list, y2_list = [], [], []
+
+        for (y, y2), (z, z2) in zip(label_list1, label_list2):
+            x, ya, yb = self._mixup_merge(y, y2, z, z2, samples1, samples2)
+            if self.args.input_permutation:
+                x = self._permute(x)
+            x_list.append(x)
+            y_list.append(ya)
+            y2_list.append(yb)
+        x_list = np.asarray(x_list)
+        y_list = np.asarray(y_list)
+        y2_list = np.asarray(y2_list)
+        return x_list, [y_list, y2_list]
+
+    def _interpolate_output(self, a, b, alpha):
+        ya = np.asarray(one_hot(a, self.output_nodes))
+        yb = np.asarray(one_hot(b, self.output_nodes))
+        y = alpha * ya + (1 - alpha) * yb
+        return y
+
+    def _mixup_merge(self, y, y2, z, z2, samples1, samples2):
+        x1 = self._merge(y, y2, samples1, samples2)
+        x2 = self._merge(z, z2, samples1, samples2)
+
+        alpha = random.random()
+        x = alpha * x1 + (1 - alpha) * x2
+        ya = self._interpolate_output(y, z, alpha)
+        yb = self._interpolate_output(y2, z2, alpha)
+        return x, ya, yb
+
+    def get_eval_samples(self, k):
+        return super()._get_samples(self.eval_data, self.eval_data, k,
+                                    is_train=True, pretrain=False)
+
+    def get_training_samples_for_evaluation(self, k, pretrain=False):
+        return super()._get_samples(self.train_samples1, self.train_samples2,
+                                    k, is_train=True, pretrain=pretrain)
 
 
 class LengthDataGenerator(TextDataGenerator):
@@ -577,3 +760,85 @@ class LengthDataGenerator(TextDataGenerator):
         padding = [0] * (self.max_length - len(x))
         x = x + padding
         return x
+
+
+class ReviewDataGenerator(LengthDataGenerator):
+    def __init__(self, args):
+        self.args = args
+        self.output_nodes = 5
+
+        self.maxlen = 100
+        self.max_length = self.maxlen + 1
+        data, self.vocab_size = self.get_data()
+        self.input_shape = self.compute_input_shape()
+
+        # Preprocessing
+        self.train_samples1 = data
+        self.test_samples1 = self.train_samples1
+        self.train_samples2 = self.train_samples1
+        self.test_samples2 = self.test_samples1
+
+        self.train_label_pairs = []
+        self.test_label_pairs = []
+        self.get_label_splits()
+
+        self.prepare_eval_data(data)
+
+    def get_eval_samples(self, k):
+        return self._get_samples(self.eval_data, self.eval_data, k,
+                                 is_train=True, pretrain=False)
+
+    def get_data(self):
+        # load
+        id_list = [
+            'Books_5',
+            'Clothing_Shoes_and_Jewelry_5',
+            'Home_and_Kitchen_5',
+            'Electronics_5',
+            'Movies_and_TV_5',
+        ]
+
+        id_map = {}
+        max_id = 2
+        data = [[[] for _ in range(self.output_nodes)] for _ in
+                range(self.output_nodes)]
+        for category, i in enumerate(id_list):
+            fn = '../../data/amazon/' + i + '.tsv'
+            print('loading', fn)
+            with open(fn, 'r') as f:
+                lines = f.readlines()
+            random.shuffle(lines)
+            lines = lines[:100000]
+            for line in lines:
+                terms = line.strip().split('\t')
+                if len(terms) != 2:
+                    continue
+                rating = int(terms[0])
+                words = terms[1].split(' ')
+                # if len(words) < 10:
+                #    continue
+
+                x = [1]
+                for word in words:
+                    if word not in id_map:
+                        id_map[word] = max_id
+                        max_id += 1
+                    x.append(id_map[word])
+                y = rating - 1
+                data[y][category].append(x)
+
+        return data, max_id
+
+    def _merge(self, y, y2, samples1, samples2):
+        x = random.choice(samples1[y][y2])
+        padded_x = np.array(x + ([0] * (self.max_length - len(x))))
+        return padded_x
+
+    def is_train_label(self, x, y):
+        if self.args.label_split == 'tile':
+            return x < 3 or y < 3
+        elif self.args.label_split == 'diagonal':
+            diff = (y - x + self.output_nodes) % self.output_nodes
+            return diff < 3
+        raise ValueError(
+            '{0} is not a valid label_split.'.format(self.args.label_split))

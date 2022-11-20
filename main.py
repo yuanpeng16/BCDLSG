@@ -36,13 +36,16 @@ def train(args, dg, model, ev, pretrain=False):
 
 
 def main(args):
-    # get data (fix test data)
+    # get data
     set_random_seeds(42, 43)
     dg = get_data_generator(args)
-    eval_data = dg.get_eval_samples(args.test_sample_size)
+    eval_data = dg.get_training_samples_for_evaluation(args.test_sample_size)
+    eval_new_data = dg.get_eval_samples(args.test_sample_size)
     test_data = dg.get_test_samples(args.test_sample_size, randomize=False)
     random_data = dg.get_test_samples(args.test_sample_size, randomize=True)
-    large_eval_data = dg.get_eval_samples(10 * args.test_sample_size)
+    large_eval_data = dg.get_training_samples_for_evaluation(
+        10 * args.test_sample_size)
+    large_eval_new_data = dg.get_eval_samples(10 * args.test_sample_size)
     large_test_data = dg.get_test_samples(10 * args.test_sample_size,
                                           randomize=False)
     large_random_data = dg.get_test_samples(10 * args.test_sample_size,
@@ -66,8 +69,10 @@ def main(args):
     mg.set_vocab_size(dg.get_vocab_size())
     model = mg.get_model()
     test_label_pairs = dg.get_test_label_pairs()
-    ev = get_evaluator(args, model, [eval_data, test_data, random_data],
-                       [large_eval_data, large_test_data, large_random_data],
+    ev = get_evaluator(args, model,
+                       [eval_data, test_data, random_data, eval_new_data],
+                       [large_eval_data, large_test_data, large_random_data,
+                        large_eval_new_data],
                        test_label_pairs)
 
     # train and evaluate
