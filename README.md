@@ -38,6 +38,10 @@ Please download 5-core data for the following five categories from https://nijia
 ### Zero-shot learning
 
 Please download data and put to corresponding folder.
+- apy: https://vision.cs.uiuc.edu/attributes/
+- awa2: https://cvml.ist.ac.at/AwA2/
+- cub: http://www.vision.caltech.edu/datasets/cub_200_2011/
+- sun: https://cs.brown.edu/~gmpatter/sunattributes.html
 
     # Preprocess
     python3 preprocess_data.py --dataest cub
