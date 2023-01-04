@@ -1,8 +1,8 @@
-tensorflow==2.1.0
-gin-config==0.5.0
+tensorflow
+gin-config
 tf-models-official==2.2.1
-numpy==1.19.5
-matplotlib==3.1.2
-Pillow==5.1.0
-scipy==1.4.1
-nltk==3.6.7
+numpy
+matplotlib
+Pillow
+scipy
+nltk
