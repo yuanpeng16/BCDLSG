@@ -23,7 +23,7 @@ Please download 5-core data for the following five categories from https://nijia
 
     # Preprocess
     # Images
-    python3 preprocess_data.py --dataest nico
+    python3 preprocess_data.py --dataset nico
     # Texts: repeat for the five categories.
     python3 amazon_review_dataset.py --category Movies_and_TV_5
 
