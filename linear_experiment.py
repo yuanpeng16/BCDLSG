@@ -189,17 +189,15 @@ class Experiment(object):
 def one_depth(args, depth, data):
     results = []
     angle_matrix = []
-    for i in range(10):
+    for i in range(8):
         experiment = Experiment(args, depth)
         result = experiment.run(data, i)
         results.append(result[1])
         angle_matrix.append(result[2])
 
-    angle_matrix = np.asarray(angle_matrix)
-    mean = np.mean(angle_matrix, 0)
-    std = np.std(angle_matrix, 0)
-    plt.plot(mean)
-    plt.fill_between(np.arange(len(mean)), mean - std, mean + std, alpha=0.2)
+    for angle in angle_matrix:
+        plt.plot(angle)
+
     folder = os.path.join("lin_results", str(args.width), 'angles')
     os.makedirs(folder, exist_ok=True)
     fn = os.path.join(folder, str(depth) + 'd.pdf')
@@ -241,7 +239,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--log_dir', type=str, default='',
                         help='Log directory.')
-    parser.add_argument('--steps', type=int, default=200,
+    parser.add_argument('--steps', type=int, default=100,
                         help='Steps.')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate.')
