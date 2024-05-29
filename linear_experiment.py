@@ -19,22 +19,25 @@ the mini-library jax.example_libraries.optimizers is for first-order stochastic
 optimization.
 """
 
-import time
 import itertools
 
 import numpy as np
 import numpy.random as npr
+import matplotlib.pyplot as plt
+import os
 
 import jax.numpy as jnp
 from jax import jit, grad, random
 from jax.example_libraries import optimizers
 from jax.example_libraries import stax
-from jax.example_libraries.stax import Dense, Relu, LogSoftmax
+from jax.example_libraries.stax import Dense, Relu
 from jax.scipy.special import logsumexp
-import keras.datasets.mnist
 
 
 # from examples import datasets
+
+def get_labels(inputs):
+    return np.maximum(np.sign(inputs), 0).astype(np.int32)
 
 
 def get_data():
@@ -43,31 +46,41 @@ def get_data():
         [-1, -1],
         [1, -1]
     ], dtype=np.float32)
-    train_labels = np.asarray([
-        [0, 1],
-        [0, 0],
-        [1, 0]
-    ], dtype=np.int32)
+    train_labels = get_labels(train_inputs)
 
-    test_inputs = np.asarray([
-        [1, 1]
-    ], dtype=np.float32)
-    test_labels = np.asarray([
-        [1, 1]
-    ], dtype=np.int32)
+    test_inputs = []
+    dots = 50
+    for i in range(-dots, dots, 1):
+        for j in range(-dots, dots, 1):
+            test_inputs.append([i / dots, j / dots])
+    test_inputs = np.asarray(test_inputs, dtype=np.float32)
+    test_labels = np.asarray([[1, 1] for _ in test_inputs])
     return (train_inputs, train_labels), (test_inputs, test_labels)
-
-
-rng = random.PRNGKey(0)
 
 
 class Experiment(object):
     def __init__(self, width, depth):
+        self.width = width
+        self.depth = depth
         layers = []
         for _ in range(depth):
-            layers += [Dense(width), Relu]
+            layers += [Dense(width)]
         layers.append(Dense(4))
         self.init_random_params, self.logit_predict = stax.serial(*layers)
+
+    def save_fig(self, inputs, predicted_class, fn):
+        predicted_class1, predicted_class2 = predicted_class
+        prediction = [[] for _ in range(4)]
+        for x, p1, p2 in zip(inputs, predicted_class1, predicted_class2):
+            prediction[p1 * 2 + p2].append(x)
+
+        colors = ['red', 'green', 'blue', 'yellow']
+        for p, c in zip(prediction, colors):
+            if len(p) > 0:
+                x, y = np.transpose(np.asarray(p))
+                plt.scatter(x, y, c=c)
+        plt.savefig(fn)
+        plt.clf()
 
     def loss(self, params, batch):
         inputs, targets = batch
@@ -77,7 +90,7 @@ class Experiment(object):
         loss2 = -jnp.mean(jnp.sum(preds2 * targets2, axis=1))
         return loss1 + loss2
 
-    def accuracy(self, params, batch):
+    def accuracy(self, params, batch, save=None):
         inputs, targets = batch
         targets1, targets2 = targets
         target_class1 = jnp.argmax(targets1, axis=1)
@@ -85,6 +98,9 @@ class Experiment(object):
         preds1, preds2 = self.predict(params, inputs)
         predicted_class1 = jnp.argmax(preds1, axis=1)
         predicted_class2 = jnp.argmax(preds2, axis=1)
+        if save is not None:
+            predicted_class = predicted_class1, predicted_class2
+            self.save_fig(inputs, predicted_class, save)
         correct1 = predicted_class1 == target_class1
         correct2 = predicted_class2 == target_class2
         return jnp.mean(correct1 * correct2)
@@ -96,9 +112,9 @@ class Experiment(object):
         preds2 = logits2 - logsumexp(logits2, axis=1, keepdims=True)
         return preds1, preds2
 
-    def run(self, data):
-        step_size = 0.001
-        num_epochs = 100
+    def run(self, data, index):
+        step_size = 0.01
+        num_epochs = 1000
 
         (train_images, train_labels), (test_images, test_labels) = data
         batches = train_images, train_labels
@@ -110,6 +126,7 @@ class Experiment(object):
             params = get_params(opt_state)
             return opt_update(i, grad(self.loss)(params, batch), opt_state)
 
+        rng = random.PRNGKey(index)
         _, init_params = self.init_random_params(rng, (-1, 2))
         opt_state = opt_init(init_params)
         itercount = itertools.count()
@@ -119,15 +136,18 @@ class Experiment(object):
 
         params = get_params(opt_state)
         train_acc = self.accuracy(params, (train_images, train_labels))
-        test_acc = self.accuracy(params, (test_images, test_labels))
+        folder = os.path.join('lin_results', str(self.width), str(self.depth))
+        os.makedirs(folder, exist_ok=True)
+        fn = os.path.join(folder, str(index) + '.pdf')
+        test_acc = self.accuracy(params, (test_images, test_labels), fn)
         return train_acc, test_acc
 
 
 def one_depth(depth, data):
     results = []
-    for i in range(20):
-        experiment = Experiment(1024, depth)
-        result = experiment.run(data)
+    for i in range(5):
+        experiment = Experiment(64, depth)
+        result = experiment.run(data, i)
         results.append(result[1])
     return np.asarray(results)
 
@@ -148,7 +168,7 @@ def main():
     data = (train_images, train_labels), (test_images, test_labels)
 
     all_results = []
-    for depth in range(1, 8):
+    for depth in range(8):
         results = one_depth(depth, data)
         print(depth, results)
         all_results.append(results)

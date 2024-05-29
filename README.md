@@ -8,18 +8,20 @@
 ## More experiments
 
 ### Natural inputs
+
 Please download data and put to corresponding folder.
 
 NICO++ data: Please download data from https://nicochallenge.com/dataset and put to ../../data/nico.
 
 Amazon review data:
-Please download 5-core data for the following five categories from https://nijianmo.github.io/amazon/index.html and extract to ../../data/amazon.
+Please download 5-core data for the following five categories from https://nijianmo.github.io/amazon/index.html and
+extract to ../../data/amazon.
+
 - Books_5
 - Clothing_Shoes_and_Jewelry_5
 - Home_and_Kitchen_5
 - Electronics_5
 - Movies_and_TV_5
-
 
     # Preprocess
     # Images
@@ -38,11 +40,11 @@ Please download 5-core data for the following five categories from https://nijia
 ### Zero-shot learning
 
 Please download data and put to corresponding folder.
+
 - apy: https://vision.cs.uiuc.edu/attributes/
 - awa2: https://cvml.ist.ac.at/AwA2/
 - cub: http://www.vision.caltech.edu/datasets/cub_200_2011/
 - sun: https://cs.brown.edu/~gmpatter/sunattributes.html
-
 
     # Preprocess
     python3 preprocess_data.py --dataest cub
@@ -71,6 +73,10 @@ Please download data and put to corresponding folder.
 
     # Scripts in scripts/label
     sh scripts/batch.sh scripts/label/label_tile.sh
+
+### Linear experiment
+
+    python3 linear_experiment.py
 
 ## Plot results
 
