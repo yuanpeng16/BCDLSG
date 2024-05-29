@@ -153,7 +153,7 @@ class Experiment(object):
         return preds1, preds2
 
     def run(self, data, index):
-        step_size = 0.01
+        step_size = 0.001
         num_epochs = 1000
 
         (train_images, train_labels), (test_images, test_labels) = data
@@ -171,8 +171,10 @@ class Experiment(object):
         opt_state = opt_init(init_params)
         itercount = itertools.count()
 
+        angles = []
         for epoch in range(num_epochs):
             opt_state = update(next(itercount), opt_state, batches)
+            angles.append(self.get_angle(get_params(opt_state)))
 
         params = get_params(opt_state)
         train_acc = self.accuracy(params, (train_images, train_labels))
@@ -180,15 +182,30 @@ class Experiment(object):
         os.makedirs(folder, exist_ok=True)
         fn = os.path.join(folder, str(index) + '.pdf')
         test_acc = self.accuracy(params, (test_images, test_labels), fn)
-        return train_acc, test_acc
+        return train_acc, test_acc, angles
 
 
 def one_depth(depth, data):
+    width = 64
     results = []
+    angle_matrix = []
     for i in range(5):
-        experiment = Experiment(64, depth)
+        experiment = Experiment(width, depth)
         result = experiment.run(data, i)
         results.append(result[1])
+        angle_matrix.append(result[2])
+
+    angle_matrix = np.asarray(angle_matrix)
+    mean = np.mean(angle_matrix, 0)
+    std = np.std(angle_matrix, 0)
+    plt.plot(mean)
+    plt.fill_between(np.arange(len(mean)), mean - std, mean + std, alpha=0.2)
+    folder = os.path.join("lin_results", str(width), 'angles')
+    os.makedirs(folder, exist_ok=True)
+    fn = os.path.join(folder, str(depth) + 'd.pdf')
+    plt.savefig(fn)
+    plt.clf()
+
     return np.asarray(results)
 
 
