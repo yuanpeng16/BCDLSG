@@ -25,6 +25,7 @@ import numpy as np
 import numpy.random as npr
 import matplotlib.pyplot as plt
 import os
+import argparse
 
 import jax.numpy as jnp
 from jax import jit, grad, random
@@ -59,12 +60,12 @@ def get_data():
 
 
 class Experiment(object):
-    def __init__(self, width, depth):
-        self.width = width
+    def __init__(self, args, depth):
+        self.args = args
         self.depth = depth
         layers = []
         for _ in range(depth):
-            layers += [Dense(width)]
+            layers += [Dense(args.width)]
         layers.append(Dense(4))
         self.init_random_params, self.logit_predict = stax.serial(*layers)
 
@@ -112,11 +113,13 @@ class Experiment(object):
         w = np.transpose(w)
         v1 = w[0] - w[1]
         v2 = w[2] - w[3]
-        v1_length = np.sqrt(np.dot(v1, v1))
-        v2_length = np.sqrt(np.dot(v2, v2))
+        v1_length = np.linalg.norm(v1)
+        v2_length = np.linalg.norm(v2)
         cos = np.dot(v1, v2) / (v1_length * v2_length)
-        angle = np.arccos(cos)
-        angle = angle * 180 / np.pi
+        assert cos > -1 - 0.000001
+        assert cos < 1 + 0.000001
+        angle = np.arccos(np.clip(cos, -1, 1))
+        angle = np.degrees(angle)
         return angle
 
     def get_linear_params(self, params):
@@ -153,44 +156,41 @@ class Experiment(object):
         return preds1, preds2
 
     def run(self, data, index):
-        step_size = 0.001
-        num_epochs = 1000
-
         (train_images, train_labels), (test_images, test_labels) = data
         batches = train_images, train_labels
 
-        opt_init, opt_update, get_params = optimizers.adam(step_size)
+        opt_init, opt_update, get_params = optimizers.adam(self.args.lr)
 
         @jit
         def update(i, opt_state, batch):
             params = get_params(opt_state)
             return opt_update(i, grad(self.loss)(params, batch), opt_state)
 
-        rng = random.PRNGKey(index)
+        rng = random.PRNGKey(npr.randint(1000000))
         _, init_params = self.init_random_params(rng, (-1, 2))
         opt_state = opt_init(init_params)
         itercount = itertools.count()
 
-        angles = []
-        for epoch in range(num_epochs):
+        angles = [self.get_angle(get_params(opt_state))]
+        for epoch in range(self.args.steps):
             opt_state = update(next(itercount), opt_state, batches)
             angles.append(self.get_angle(get_params(opt_state)))
 
         params = get_params(opt_state)
         train_acc = self.accuracy(params, (train_images, train_labels))
-        folder = os.path.join('lin_results', str(self.width), str(self.depth))
+        folder = os.path.join('lin_results', str(self.args.width),
+                              str(self.depth))
         os.makedirs(folder, exist_ok=True)
         fn = os.path.join(folder, str(index) + '.pdf')
         test_acc = self.accuracy(params, (test_images, test_labels), fn)
         return train_acc, test_acc, angles
 
 
-def one_depth(depth, data):
-    width = 64
+def one_depth(args, depth, data):
     results = []
     angle_matrix = []
-    for i in range(5):
-        experiment = Experiment(width, depth)
+    for i in range(10):
+        experiment = Experiment(args, depth)
         result = experiment.run(data, i)
         results.append(result[1])
         angle_matrix.append(result[2])
@@ -200,7 +200,7 @@ def one_depth(depth, data):
     std = np.std(angle_matrix, 0)
     plt.plot(mean)
     plt.fill_between(np.arange(len(mean)), mean - std, mean + std, alpha=0.2)
-    folder = os.path.join("lin_results", str(width), 'angles')
+    folder = os.path.join("lin_results", str(args.width), 'angles')
     os.makedirs(folder, exist_ok=True)
     fn = os.path.join(folder, str(depth) + 'd.pdf')
     plt.savefig(fn)
@@ -209,7 +209,7 @@ def one_depth(depth, data):
     return np.asarray(results)
 
 
-def main():
+def main(args):
     (train_images, train_labels), (test_images, test_labels) = get_data()
 
     train_labels = np.transpose(train_labels)
@@ -225,8 +225,8 @@ def main():
     data = (train_images, train_labels), (test_images, test_labels)
 
     all_results = []
-    for depth in range(8):
-        results = one_depth(depth, data)
+    for depth in range(20):
+        results = one_depth(args, depth, data)
         print(depth, results)
         all_results.append(results)
 
@@ -237,5 +237,14 @@ def main():
     print(std)
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--log_dir', type=str, default='',
+                        help='Log directory.')
+    parser.add_argument('--steps', type=int, default=200,
+                        help='Steps.')
+    parser.add_argument('--lr', type=float, default=0.001,
+                        help='Learning rate.')
+    parser.add_argument('--width', type=int, default=32,
+                        help='width.')
+    main(parser.parse_args())
