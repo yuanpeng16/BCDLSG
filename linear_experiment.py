@@ -171,10 +171,14 @@ class Experiment(object):
         opt_state = opt_init(init_params)
         itercount = itertools.count()
 
-        angles = [self.get_angle(get_params(opt_state))]
+        params = get_params(opt_state)
+        angles = [self.get_angle(params)]
+        losses = [self.loss(params, batches)]
         for epoch in range(self.args.steps):
             opt_state = update(next(itercount), opt_state, batches)
-            angles.append(self.get_angle(get_params(opt_state)))
+            params = get_params(opt_state)
+            angles.append(self.get_angle(params))
+            losses.append(self.loss(params, batches))
 
         params = get_params(opt_state)
         train_acc = self.accuracy(params, (train_images, train_labels))
@@ -183,26 +187,35 @@ class Experiment(object):
         os.makedirs(folder, exist_ok=True)
         fn = os.path.join(folder, str(index) + '.pdf')
         test_acc = self.accuracy(params, (test_images, test_labels), fn)
-        return train_acc, test_acc, angles
+        return train_acc, test_acc, angles, losses
 
+
+def plot_matrix(matrix, fn):
+    for row in matrix:
+        plt.plot(row)
+    plt.savefig(fn)
+    plt.clf()
 
 def one_depth(args, depth, data):
     results = []
     angle_matrix = []
+    loss_matrix = []
     for i in range(8):
         experiment = Experiment(args, depth)
         result = experiment.run(data, i)
         results.append(result[1])
         angle_matrix.append(result[2])
-
-    for angle in angle_matrix:
-        plt.plot(angle)
+        loss_matrix.append(result[3])
 
     folder = os.path.join("lin_results", str(args.width), 'angles')
     os.makedirs(folder, exist_ok=True)
     fn = os.path.join(folder, str(depth) + 'd.pdf')
-    plt.savefig(fn)
-    plt.clf()
+    plot_matrix(angle_matrix, fn)
+
+    folder = os.path.join("lin_results", str(args.width), 'loss')
+    os.makedirs(folder, exist_ok=True)
+    fn = os.path.join(folder, str(depth) + 'd.pdf')
+    plot_matrix(loss_matrix, fn)
 
     return np.asarray(results)
 
