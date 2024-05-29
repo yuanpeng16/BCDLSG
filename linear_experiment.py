@@ -182,11 +182,15 @@ class Experiment(object):
 
         params = get_params(opt_state)
         train_acc = self.accuracy(params, (train_images, train_labels))
-        folder = os.path.join('lin_results', str(self.args.width),
-                              str(self.depth))
-        os.makedirs(folder, exist_ok=True)
-        fn = os.path.join(folder, str(index) + '.pdf')
-        test_acc = self.accuracy(params, (test_images, test_labels), fn)
+
+        if self.args.plot_prediction:
+            folder = os.path.join('lin_results', str(self.args.width),
+                                  str(self.depth))
+            os.makedirs(folder, exist_ok=True)
+            fn = os.path.join(folder, str(index) + '.pdf')
+            test_acc = self.accuracy(params, (test_images, test_labels), fn)
+        else:
+            test_acc = None
         return train_acc, test_acc, angles, losses
 
 
@@ -238,14 +242,18 @@ def main(args):
     all_results = []
     for depth in range(20):
         results = one_depth(args, depth, data)
-        print(depth, results)
-        all_results.append(results)
+        if args.plot_prediction:
+            print(depth, results)
+            all_results.append(results)
+        else:
+            print(depth)
 
-    matrix = np.asarray(all_results)
-    mean = np.mean(matrix, -1)
-    std = np.std(matrix, -1)
-    print(mean)
-    print(std)
+    if args.plot_prediction:
+        matrix = np.asarray(all_results)
+        mean = np.mean(matrix, -1)
+        std = np.std(matrix, -1)
+        print(mean)
+        print(std)
 
 
 if __name__ == '__main__':
@@ -258,4 +266,7 @@ if __name__ == '__main__':
                         help='Learning rate.')
     parser.add_argument('--width', type=int, default=32,
                         help='width.')
+    parser.add_argument('--plot_prediction', action='store_true',
+                        default=False,
+                        help='Plot prediction.')
     main(parser.parse_args())
