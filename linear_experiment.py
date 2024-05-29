@@ -174,7 +174,16 @@ class Experiment(object):
         params = get_params(opt_state)
         angles = [self.get_angle(params)]
         losses = [self.loss(params, batches)]
-        for epoch in range(self.args.steps):
+
+        step = self.args.steps
+        if self.depth == 0:
+            step *= 8
+        elif self.depth == 1:
+            step *= 4
+        elif self.depth == 2:
+            step *= 2
+
+        for epoch in range(step):
             opt_state = update(next(itercount), opt_state, batches)
             params = get_params(opt_state)
             angles.append(self.get_angle(params))
