@@ -214,6 +214,9 @@ def one_depth(args, depth, data):
     folder = os.path.join("lin_results", str(args.width), 'angles')
     os.makedirs(folder, exist_ok=True)
     fn = os.path.join(folder, str(depth) + 'd.pdf')
+    plt.axhline(y=0, color='gray', linestyle='dashed')
+    plt.axhline(y=90, color='gray', linestyle='dashed')
+    plt.axhline(y=180, color='gray', linestyle='dashed')
     plot_matrix(angle_matrix, fn)
 
     folder = os.path.join("lin_results", str(args.width), 'loss')
