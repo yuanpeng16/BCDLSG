@@ -78,6 +78,10 @@ Please download data and put to corresponding folder.
 
     python3 linear_experiment.py
 
+### Same outputs
+
+    python3 same_outputs.py
+
 ## Plot results
 
     python3 plot_results.py --experiment_id main_dnn --show_legend
