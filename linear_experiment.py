@@ -90,12 +90,52 @@ class Experiment(object):
         loss2 = -jnp.mean(jnp.sum(preds2 * targets2, axis=1))
         return loss1 + loss2
 
-    def accuracy(self, params, batch, save=None):
+    def accuracy1(self, params, batch, save=None):
         inputs, targets = batch
         targets1, targets2 = targets
         target_class1 = jnp.argmax(targets1, axis=1)
         target_class2 = jnp.argmax(targets2, axis=1)
         preds1, preds2 = self.predict(params, inputs)
+        predicted_class1 = jnp.argmax(preds1, axis=1)
+        predicted_class2 = jnp.argmax(preds2, axis=1)
+        if save is not None:
+            predicted_class = predicted_class1, predicted_class2
+            self.save_fig(inputs, predicted_class, save)
+        correct1 = predicted_class1 == target_class1
+        correct2 = predicted_class2 == target_class2
+        return jnp.mean(correct1 * correct2)
+
+    def get_angle(self, params):
+        w, _ = params[0]
+        for w1, _ in params[1:]:
+            w = np.matmul(w, w1)
+        w = np.transpose(w)
+        v1 = w[0] - w[1]
+        v2 = w[2] - w[3]
+        v1_length = np.sqrt(np.dot(v1, v1))
+        v2_length = np.sqrt(np.dot(v2, v2))
+        cos = np.dot(v1, v2) / (v1_length * v2_length)
+        angle = np.arccos(cos)
+        angle = angle * 180 / np.pi
+        return angle
+
+    def get_linear_params(self, params):
+        w, b = params[0]
+        for w1, b1 in params[1:]:
+            w = np.matmul(w, w1)
+            b = np.matmul(b, w1) + b1
+        return w, b
+
+    def accuracy(self, params, batch, save=None):
+        inputs, targets = batch
+        targets1, targets2 = targets
+        target_class1 = jnp.argmax(targets1, axis=1)
+        target_class2 = jnp.argmax(targets2, axis=1)
+
+        w, b = self.get_linear_params(params)
+        predictions = np.matmul(inputs, w) + np.expand_dims(b, 0)
+        preds1, preds2 = np.split(predictions, 2, -1)
+
         predicted_class1 = jnp.argmax(preds1, axis=1)
         predicted_class2 = jnp.argmax(preds2, axis=1)
         if save is not None:
