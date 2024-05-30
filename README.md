@@ -76,7 +76,7 @@ Please download data and put to corresponding folder.
 
 ### Linear experiment
 
-    python3 linear_experiment.py
+    sh linear_scripts/linear_16.sh
 
 ### Same outputs
 

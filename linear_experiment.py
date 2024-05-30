@@ -193,8 +193,8 @@ class Experiment(object):
         train_acc = self.accuracy(params, (train_images, train_labels))
 
         if self.args.plot_prediction:
-            folder = os.path.join('lin_results', str(self.args.width),
-                                  str(self.depth))
+            folder = os.path.join('lin_results', 'predictions',
+                                  str(self.args.width), str(self.depth))
             os.makedirs(folder, exist_ok=True)
             fn = os.path.join(folder, str(index) + '.pdf')
             test_acc = self.accuracy(params, (test_images, test_labels), fn)
@@ -209,13 +209,16 @@ def plot_matrix(matrix, fn):
     plt.savefig(fn)
     plt.clf()
 
+
 def one_depth(args, depth, data):
+    train_results = []
     results = []
     angle_matrix = []
     loss_matrix = []
-    for i in range(8):
+    for i in range(10):
         experiment = Experiment(args, depth)
         result = experiment.run(data, i)
+        train_results.append(result[0])
         results.append(result[1])
         angle_matrix.append(result[2])
         loss_matrix.append(result[3])
@@ -228,12 +231,26 @@ def one_depth(args, depth, data):
     plt.axhline(y=180, color='gray', linestyle='dashed')
     plot_matrix(angle_matrix, fn)
 
+    folder = os.path.join("lin_results", str(args.width), 'angles_mean')
+    os.makedirs(folder, exist_ok=True)
+    fn = os.path.join(folder, str(depth) + 'd.pdf')
+    angle_mean = np.mean(angle_matrix, 0)
+    angle_std = np.std(angle_matrix, 0)
+    plt.axhline(y=0, color='gray', linestyle='dashed')
+    plt.axhline(y=90, color='gray', linestyle='dashed')
+    plt.axhline(y=180, color='gray', linestyle='dashed')
+    plt.plot(angle_mean, color='black')
+    plt.fill_between(np.arange(len(angle_mean)), angle_mean - angle_std,
+                     angle_mean + angle_std, color='black', alpha=0.2)
+    plt.savefig(fn)
+    plt.clf()
+
     folder = os.path.join("lin_results", str(args.width), 'loss')
     os.makedirs(folder, exist_ok=True)
     fn = os.path.join(folder, str(depth) + 'd.pdf')
     plot_matrix(loss_matrix, fn)
 
-    return np.asarray(results)
+    return np.asarray(results), np.asarray(train_results)
 
 
 def main(args):
@@ -251,14 +268,22 @@ def main(args):
     test_labels = test_labels1, test_labels2
     data = (train_images, train_labels), (test_images, test_labels)
 
+    train_results = []
     all_results = []
-    for depth in range(20):
-        results = one_depth(args, depth, data)
+    for depth in range(40):
+        results, train_result = one_depth(args, depth, data)
+        train_results.append(train_result)
         if args.plot_prediction:
-            print(depth, results)
+            print(depth, train_result, results)
             all_results.append(results)
         else:
-            print(depth)
+            print(depth, train_result)
+
+    matrix = np.asarray(train_results)
+    mean = np.mean(matrix, -1)
+    std = np.std(matrix, -1)
+    print(mean)
+    print(std)
 
     if args.plot_prediction:
         matrix = np.asarray(all_results)
@@ -272,11 +297,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--log_dir', type=str, default='',
                         help='Log directory.')
-    parser.add_argument('--steps', type=int, default=100,
+    parser.add_argument('--steps', type=int, default=200,
                         help='Steps.')
     parser.add_argument('--lr', type=float, default=0.001,
                         help='Learning rate.')
-    parser.add_argument('--width', type=int, default=32,
+    parser.add_argument('--width', type=int, default=8,
                         help='width.')
     parser.add_argument('--plot_prediction', action='store_true',
                         default=False,
