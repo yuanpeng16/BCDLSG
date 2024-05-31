@@ -75,7 +75,7 @@ class Experiment(object):
         for x, p1, p2 in zip(inputs, predicted_class1, predicted_class2):
             prediction[p1 * 2 + p2].append(x)
 
-        colors = ['red', 'green', 'blue', 'yellow']
+        colors = ['green', 'orange', 'blue', 'white']
         for p, c in zip(prediction, colors):
             if len(p) > 0:
                 x, y = np.transpose(np.asarray(p))
@@ -193,8 +193,8 @@ class Experiment(object):
         train_acc = self.accuracy(params, (train_images, train_labels))
 
         if self.args.plot_prediction:
-            folder = os.path.join('lin_results', 'predictions',
-                                  str(self.args.width), str(self.depth))
+            folder = os.path.join('lin_results', str(self.args.width),
+                                  'predictions', str(self.depth))
             os.makedirs(folder, exist_ok=True)
             fn = os.path.join(folder, str(index) + '.pdf')
             test_acc = self.accuracy(params, (test_images, test_labels), fn)
