@@ -49,13 +49,10 @@ def get_data():
     ], dtype=np.float32)
     train_labels = get_labels(train_inputs)
 
-    test_inputs = []
-    dots = 50
-    for i in range(-dots, dots, 1):
-        for j in range(-dots, dots, 1):
-            test_inputs.append([i / dots, j / dots])
-    test_inputs = np.asarray(test_inputs, dtype=np.float32)
-    test_labels = np.asarray([[1, 1] for _ in test_inputs])
+    test_inputs = np.asarray([
+        [1, 1]
+    ], dtype=np.float32)
+    test_labels = get_labels(test_inputs)
     return (train_inputs, train_labels), (test_inputs, test_labels)
 
 
@@ -69,18 +66,29 @@ class Experiment(object):
         layers.append(Dense(4))
         self.init_random_params, self.logit_predict = stax.serial(*layers)
 
-    def save_fig(self, inputs, predicted_class, fn):
-        predicted_class1, predicted_class2 = predicted_class
-        prediction = [[] for _ in range(4)]
-        for x, p1, p2 in zip(inputs, predicted_class1, predicted_class2):
-            prediction[p1 * 2 + p2].append(x)
+    def get_x(self, w, b, x1):
+        x2 = (-b - w[0] * x1) / w[1]
+        return [x1, x2]
 
-        colors = ['green', 'orange', 'blue', 'white']
-        for p, c in zip(prediction, colors):
-            if len(p) > 0:
-                x, y = np.transpose(np.asarray(p))
-                plt.scatter(x, y, c=c)
-        plt.savefig(fn)
+    def draw_one_line(self, w, b, color):
+        p1 = self.get_x(w, b, 0)
+        p2 = self.get_x(w, b, 1)
+        x, y = np.transpose(np.asarray([p1, p2]))
+        plt.plot(x, y, color=color)
+        plt.xlim([0, 1])
+        plt.ylim([0, 1])
+        y2 = 0 if w[1] < 0 else 1
+        plt.fill_between(x, y, [y2, y2], color=color, alpha=0.2)
+
+    def draw_fig(self, w, b, fn):
+        w = np.transpose(w)
+        w1 = w[1] - w[0]
+        w2 = w[3] - w[2]
+        b1 = b[1] - b[0]
+        b2 = b[3] - b[2]
+        self.draw_one_line(w1, b1, 'blue')
+        self.draw_one_line(w2, b2, "orange")
+        plt.savefig(fn, bbox_inches='tight', pad_inches=0.01)
         plt.clf()
 
     def loss(self, params, batch):
@@ -91,28 +99,13 @@ class Experiment(object):
         loss2 = -jnp.mean(jnp.sum(preds2 * targets2, axis=1))
         return loss1 + loss2
 
-    def accuracy1(self, params, batch, save=None):
-        inputs, targets = batch
-        targets1, targets2 = targets
-        target_class1 = jnp.argmax(targets1, axis=1)
-        target_class2 = jnp.argmax(targets2, axis=1)
-        preds1, preds2 = self.predict(params, inputs)
-        predicted_class1 = jnp.argmax(preds1, axis=1)
-        predicted_class2 = jnp.argmax(preds2, axis=1)
-        if save is not None:
-            predicted_class = predicted_class1, predicted_class2
-            self.save_fig(inputs, predicted_class, save)
-        correct1 = predicted_class1 == target_class1
-        correct2 = predicted_class2 == target_class2
-        return jnp.mean(correct1 * correct2)
-
     def get_angle(self, params):
         w, _ = params[0]
         for w1, _ in params[1:]:
             w = np.matmul(w, w1)
         w = np.transpose(w)
-        v1 = w[0] - w[1]
-        v2 = w[2] - w[3]
+        v1 = w[1] - w[0]
+        v2 = w[3] - w[2]
         v1_length = np.linalg.norm(v1)
         v2_length = np.linalg.norm(v2)
         cos = np.dot(v1, v2) / (v1_length * v2_length)
@@ -142,8 +135,7 @@ class Experiment(object):
         predicted_class1 = jnp.argmax(preds1, axis=1)
         predicted_class2 = jnp.argmax(preds2, axis=1)
         if save is not None:
-            predicted_class = predicted_class1, predicted_class2
-            self.save_fig(inputs, predicted_class, save)
+            self.draw_fig(w, b, save)
         correct1 = predicted_class1 == target_class1
         correct2 = predicted_class2 == target_class2
         return jnp.mean(correct1 * correct2)
@@ -304,6 +296,6 @@ if __name__ == '__main__':
     parser.add_argument('--width', type=int, default=8,
                         help='width.')
     parser.add_argument('--plot_prediction', action='store_true',
-                        default=False,
+                        default=True,
                         help='Plot prediction.')
     main(parser.parse_args())
