@@ -3,4 +3,5 @@ __pycache__
 logs
 outputs
 lin_results
+same_outputs
 scripts/sanity

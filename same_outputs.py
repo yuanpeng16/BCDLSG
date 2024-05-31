@@ -124,20 +124,40 @@ if __name__ == "__main__":
   opt_state = opt_init(init_params)
   itercount = itertools.count()
 
+  train_acc_list = []
+  train_same_list = []
+  test_acc_list = []
+  test_same_list = []
+  random_same_list = []
+
   print("\nStarting training...")
   for epoch in range(num_epochs):
-    start_time = time.time()
     for _ in range(num_batches):
       opt_state = update(next(itercount), opt_state, next(batches))
-    epoch_time = time.time() - start_time
 
     params = get_params(opt_state)
     train_acc, train_same = experiment.accuracy(params, (train_images, train_labels))
     test_acc, test_same = experiment.accuracy(params, (test_images, test_labels))
     _, random_same = experiment.accuracy(params,(random_images, test_labels))
-    print(f"Epoch {epoch} in {epoch_time:0.2f} sec")
-    print(f"Training set accuracy {train_acc}")
-    print(f"Test set accuracy {test_acc}")
-    print(f"Training set same {train_same}")
-    print(f"Test set same {test_same}")
-    print(f"Random set same {random_same}")
+    train_acc_list.append(train_acc)
+    train_same_list.append(train_same)
+    test_acc_list.append(test_acc)
+    test_same_list.append(test_same)
+    random_same_list.append(random_same)
+
+    print(f"Epoch {epoch}")
+    #print(f"Training set accuracy {train_acc}")
+    #print(f"Test set accuracy {test_acc}")
+    #print(f"Training set same {train_same}")
+    #print(f"Test set same {test_same}")
+    #print(f"Random set same {random_same}")
+  folder = os.path.join("same_outputs")
+  os.makedirs(folder, exist_ok=True)
+  fn = os.path.join(folder, 'same_outputs.pdf')
+  lists = train_acc_list, train_same_list, test_acc_list, test_same_list, random_same_list
+  names = ["Train acc", "Train same", "Test acc", "Test same", "Random same"]
+  for x, name in zip(lists, names):
+    plt.plot(x, label=name)
+  plt.legend()
+  plt.savefig(fn)
+  plt.clf()
