@@ -87,7 +87,7 @@ def experiment():
     batch_size = 256
 
     (train_images, train_labels), (
-    test_images, test_labels) = keras.datasets.mnist.load_data()
+        test_images, test_labels) = keras.datasets.mnist.load_data()
     train_images = np.reshape(train_images, [train_images.shape[0], -1])
     test_images = np.reshape(test_images, [test_images.shape[0], -1])
 
@@ -138,7 +138,7 @@ def experiment():
 
         params = get_params(opt_state)
         train_acc, train_same = experiment.accuracy(params, (
-        train_images, train_labels))
+            train_images, train_labels))
         test_acc, test_same = experiment.accuracy(params,
                                                   (test_images, test_labels))
         _, random_same = experiment.accuracy(params,
@@ -172,11 +172,14 @@ if __name__ == "__main__":
     fn = os.path.join(folder, 'same_outputs.pdf')
     names = ["Train acc", "Train same", "Test acc", "Test same", "Random same"]
     for x, name in zip(lists, names):
+        x = 100 * np.asarray(x)
         mean = np.mean(x, 0)
         std = np.std(x, 0)
         plt.plot(mean, label=name)
         plt.fill_between(np.arange(len(mean)), mean - std, mean + std,
                          alpha=0.2)
     plt.legend()
+    plt.xlabel("Iterations")
+    plt.ylabel("Percentage (%)")
     plt.savefig(fn)
     plt.clf()
