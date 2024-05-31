@@ -19,12 +19,12 @@ the mini-library jax.example_libraries.optimizers is for first-order stochastic
 optimization.
 """
 
-import time
 import itertools
 
 import numpy as np
 import numpy.random as npr
 import matplotlib.pyplot as plt
+from matplotlib import rc
 import os
 import argparse
 
@@ -32,18 +32,18 @@ import jax.numpy as jnp
 from jax import jit, grad, random
 from jax.example_libraries import optimizers
 from jax.example_libraries import stax
-from jax.example_libraries.stax import Dense, Relu, LogSoftmax
+from jax.example_libraries.stax import Dense, Relu
 from jax.scipy.special import logsumexp
 import keras.datasets.mnist
 
 
 class Experiment(object):
-    def __init__(self):
-        self.depth = 4
+    def __init__(self, args):
+        self.depth = args.depth
 
         layers = []
         for _ in range(self.depth):
-            layers += [Dense(128)]
+            layers += [Dense(args.width), Relu]
         layers.append(Dense(20))
         self.init_random_params, self.logit_predict = stax.serial(*layers)
 
@@ -77,14 +77,14 @@ class Experiment(object):
         return preds1, preds2
 
 
-def experiment():
-    experiment = Experiment()
-
+def experiment(args):
     rng = random.PRNGKey(npr.randint(1000000))
 
-    step_size = 0.001
-    num_epochs = 100
-    batch_size = 256
+    experiment = Experiment(args)
+
+    step_size = args.lr
+    num_epochs = args.num_epochs
+    batch_size = args.batch_size
 
     (train_images, train_labels), (
         test_images, test_labels) = keras.datasets.mnist.load_data()
@@ -152,14 +152,18 @@ def experiment():
     return lists
 
 
-if __name__ == "__main__":
+def main(args):
+    font = {'family': 'serif'}
+    rc('font', **font)
+    fontsize = 20
+
     train_acc_list = []
     train_same_list = []
     test_acc_list = []
     test_same_list = []
     random_same_list = []
     for _ in range(5):
-        lists = experiment()
+        lists = experiment(args)
         train_acc_list.append(lists[0])
         train_same_list.append(lists[1])
         test_acc_list.append(lists[2])
@@ -169,7 +173,7 @@ if __name__ == "__main__":
     lists = train_acc_list, train_same_list, test_acc_list, test_same_list, random_same_list
     folder = os.path.join("same_outputs")
     os.makedirs(folder, exist_ok=True)
-    fn = os.path.join(folder, 'same_outputs.pdf')
+    fn = os.path.join(folder, 'same_outputs_' + str(args.depth) + '.pdf')
     names = ["Train acc", "Train same", "Test acc", "Test same", "Random same"]
     for x, name in zip(lists, names):
         x = 100 * np.asarray(x)
@@ -178,8 +182,27 @@ if __name__ == "__main__":
         plt.plot(mean, label=name)
         plt.fill_between(np.arange(len(mean)), mean - std, mean + std,
                          alpha=0.2)
-    plt.legend()
-    plt.xlabel("Iterations")
-    plt.ylabel("Percentage (%)")
-    plt.savefig(fn)
+    plt.tick_params(labelsize=fontsize)
+    if args.show_legend:
+        plt.legend(prop={'size': fontsize})
+    plt.xlabel("Iterations", fontsize=fontsize)
+    plt.ylabel("Percentage (%)", fontsize=fontsize)
+    plt.savefig(fn, bbox_inches='tight', pad_inches=0.01)
     plt.clf()
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--num_epochs', type=int, default=100,
+                        help='Number of epochs.')
+    parser.add_argument('--batch_size', type=int, default=256,
+                        help='Batch size.')
+    parser.add_argument('--lr', type=float, default=0.001,
+                        help='Learning rate.')
+    parser.add_argument('--depth', type=int, default=8,
+                        help='Depth.')
+    parser.add_argument('--width', type=int, default=128,
+                        help='Depth.')
+    parser.add_argument('--show_legend', action='store_true',
+                        default=False, help='Show legend.')
+    main(parser.parse_args())
