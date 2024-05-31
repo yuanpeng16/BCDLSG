@@ -19,7 +19,6 @@ the mini-library jax.example_libraries.optimizers is for first-order stochastic
 optimization.
 """
 
-
 import time
 import itertools
 
@@ -79,99 +78,105 @@ class Experiment(object):
 
 
 def experiment():
-  experiment = Experiment()
+    experiment = Experiment()
 
-  rng = random.PRNGKey(npr.randint(1000000))
+    rng = random.PRNGKey(npr.randint(1000000))
 
-  step_size = 0.001
-  num_epochs = 100
-  batch_size = 256
+    step_size = 0.001
+    num_epochs = 100
+    batch_size = 256
 
-  (train_images, train_labels), (test_images, test_labels) = keras.datasets.mnist.load_data()
-  train_images = np.reshape(train_images, [train_images.shape[0], -1])
-  test_images = np.reshape(test_images, [test_images.shape[0], -1])
+    (train_images, train_labels), (
+    test_images, test_labels) = keras.datasets.mnist.load_data()
+    train_images = np.reshape(train_images, [train_images.shape[0], -1])
+    test_images = np.reshape(test_images, [test_images.shape[0], -1])
 
-  train_images = train_images / 256 - 0.5
-  test_images = test_images / 256 - 0.5
-  random_images = np.random.rand(*test_images.shape) - 0.5
+    train_images = train_images / 256 - 0.5
+    test_images = test_images / 256 - 0.5
+    random_images = np.random.rand(*test_images.shape) - 0.5
 
-  n_values = np.max(train_labels) + 1
-  train_labels = np.eye(n_values)[train_labels]
-  test_labels = np.eye(n_values)[test_labels]
+    n_values = np.max(train_labels) + 1
+    train_labels = np.eye(n_values)[train_labels]
+    test_labels = np.eye(n_values)[test_labels]
 
-  num_train = train_images.shape[0]
-  num_complete_batches, leftover = divmod(num_train, batch_size)
-  num_batches = num_complete_batches + bool(leftover)
+    num_train = train_images.shape[0]
+    num_complete_batches, leftover = divmod(num_train, batch_size)
+    num_batches = num_complete_batches + bool(leftover)
 
-  def data_stream():
-    rng = npr.RandomState(0)
-    while True:
-      perm = rng.permutation(num_train)
-      for i in range(num_batches):
-        batch_idx = perm[i * batch_size:(i + 1) * batch_size]
-        yield train_images[batch_idx], train_labels[batch_idx]
-  batches = data_stream()
+    def data_stream():
+        rng = npr.RandomState(0)
+        while True:
+            perm = rng.permutation(num_train)
+            for i in range(num_batches):
+                batch_idx = perm[i * batch_size:(i + 1) * batch_size]
+                yield train_images[batch_idx], train_labels[batch_idx]
 
-  opt_init, opt_update, get_params = optimizers.adam(step_size)
+    batches = data_stream()
 
-  @jit
-  def update(i, opt_state, batch):
-    params = get_params(opt_state)
-    return opt_update(i, grad(experiment.loss)(params, batch), opt_state)
+    opt_init, opt_update, get_params = optimizers.adam(step_size)
 
-  _, init_params = experiment.init_random_params(rng, (-1, 28 * 28))
-  opt_state = opt_init(init_params)
-  itercount = itertools.count()
+    @jit
+    def update(i, opt_state, batch):
+        params = get_params(opt_state)
+        return opt_update(i, grad(experiment.loss)(params, batch), opt_state)
 
-  train_acc_list = []
-  train_same_list = []
-  test_acc_list = []
-  test_same_list = []
-  random_same_list = []
+    _, init_params = experiment.init_random_params(rng, (-1, 28 * 28))
+    opt_state = opt_init(init_params)
+    itercount = itertools.count()
 
-  print("\nStarting training...")
-  for epoch in range(num_epochs):
-    print(f"Epoch {epoch}")
-    for _ in range(num_batches):
-      opt_state = update(next(itercount), opt_state, next(batches))
+    train_acc_list = []
+    train_same_list = []
+    test_acc_list = []
+    test_same_list = []
+    random_same_list = []
 
-    params = get_params(opt_state)
-    train_acc, train_same = experiment.accuracy(params, (train_images, train_labels))
-    test_acc, test_same = experiment.accuracy(params, (test_images, test_labels))
-    _, random_same = experiment.accuracy(params,(random_images, test_labels))
-    train_acc_list.append(train_acc)
-    train_same_list.append(train_same)
-    test_acc_list.append(test_acc)
-    test_same_list.append(test_same)
-    random_same_list.append(random_same)
-  lists = train_acc_list, train_same_list, test_acc_list, test_same_list, random_same_list
-  return lists
+    print("\nStarting training...")
+    for epoch in range(num_epochs):
+        print(f"Epoch {epoch}")
+        for _ in range(num_batches):
+            opt_state = update(next(itercount), opt_state, next(batches))
+
+        params = get_params(opt_state)
+        train_acc, train_same = experiment.accuracy(params, (
+        train_images, train_labels))
+        test_acc, test_same = experiment.accuracy(params,
+                                                  (test_images, test_labels))
+        _, random_same = experiment.accuracy(params,
+                                             (random_images, test_labels))
+        train_acc_list.append(train_acc)
+        train_same_list.append(train_same)
+        test_acc_list.append(test_acc)
+        test_same_list.append(test_same)
+        random_same_list.append(random_same)
+    lists = train_acc_list, train_same_list, test_acc_list, test_same_list, random_same_list
+    return lists
 
 
 if __name__ == "__main__":
-  train_acc_list = []
-  train_same_list = []
-  test_acc_list = []
-  test_same_list = []
-  random_same_list = []
-  for _ in range(5):
-    lists = experiment()
-    train_acc_list.append(lists[0])
-    train_same_list.append(lists[1])
-    test_acc_list.append(lists[2])
-    test_same_list.append(lists[3])
-    random_same_list.append(lists[4])
+    train_acc_list = []
+    train_same_list = []
+    test_acc_list = []
+    test_same_list = []
+    random_same_list = []
+    for _ in range(5):
+        lists = experiment()
+        train_acc_list.append(lists[0])
+        train_same_list.append(lists[1])
+        test_acc_list.append(lists[2])
+        test_same_list.append(lists[3])
+        random_same_list.append(lists[4])
 
-  lists = train_acc_list, train_same_list, test_acc_list, test_same_list, random_same_list
-  folder = os.path.join("same_outputs")
-  os.makedirs(folder, exist_ok=True)
-  fn = os.path.join(folder, 'same_outputs.pdf')
-  names = ["Train acc", "Train same", "Test acc", "Test same", "Random same"]
-  for x, name in zip(lists, names):
-    mean = np.mean(x, 0)
-    std = np.std(x, 0)
-    plt.plot(mean, label=name)
-    plt.fill_between(np.arange(len(mean)), mean - std, mean + std, alpha=0.2)
-  plt.legend()
-  plt.savefig(fn)
-  plt.clf()
+    lists = train_acc_list, train_same_list, test_acc_list, test_same_list, random_same_list
+    folder = os.path.join("same_outputs")
+    os.makedirs(folder, exist_ok=True)
+    fn = os.path.join(folder, 'same_outputs.pdf')
+    names = ["Train acc", "Train same", "Test acc", "Test same", "Random same"]
+    for x, name in zip(lists, names):
+        mean = np.mean(x, 0)
+        std = np.std(x, 0)
+        plt.plot(mean, label=name)
+        plt.fill_between(np.arange(len(mean)), mean - std, mean + std,
+                         alpha=0.2)
+    plt.legend()
+    plt.savefig(fn)
+    plt.clf()
