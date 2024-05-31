@@ -78,11 +78,10 @@ class Experiment(object):
         return preds1, preds2
 
 
-if __name__ == "__main__":
-
+def experiment():
   experiment = Experiment()
 
-  rng = random.PRNGKey(0)
+  rng = random.PRNGKey(npr.randint(1000000))
 
   step_size = 0.001
   num_epochs = 100
@@ -132,6 +131,7 @@ if __name__ == "__main__":
 
   print("\nStarting training...")
   for epoch in range(num_epochs):
+    print(f"Epoch {epoch}")
     for _ in range(num_batches):
       opt_state = update(next(itercount), opt_state, next(batches))
 
@@ -144,20 +144,34 @@ if __name__ == "__main__":
     test_acc_list.append(test_acc)
     test_same_list.append(test_same)
     random_same_list.append(random_same)
+  lists = train_acc_list, train_same_list, test_acc_list, test_same_list, random_same_list
+  return lists
 
-    print(f"Epoch {epoch}")
-    #print(f"Training set accuracy {train_acc}")
-    #print(f"Test set accuracy {test_acc}")
-    #print(f"Training set same {train_same}")
-    #print(f"Test set same {test_same}")
-    #print(f"Random set same {random_same}")
+
+if __name__ == "__main__":
+  train_acc_list = []
+  train_same_list = []
+  test_acc_list = []
+  test_same_list = []
+  random_same_list = []
+  for _ in range(5):
+    lists = experiment()
+    train_acc_list.append(lists[0])
+    train_same_list.append(lists[1])
+    test_acc_list.append(lists[2])
+    test_same_list.append(lists[3])
+    random_same_list.append(lists[4])
+
+  lists = train_acc_list, train_same_list, test_acc_list, test_same_list, random_same_list
   folder = os.path.join("same_outputs")
   os.makedirs(folder, exist_ok=True)
   fn = os.path.join(folder, 'same_outputs.pdf')
-  lists = train_acc_list, train_same_list, test_acc_list, test_same_list, random_same_list
   names = ["Train acc", "Train same", "Test acc", "Test same", "Random same"]
   for x, name in zip(lists, names):
-    plt.plot(x, label=name)
+    mean = np.mean(x, 0)
+    std = np.std(x, 0)
+    plt.plot(mean, label=name)
+    plt.fill_between(np.arange(len(mean)), mean - std, mean + std, alpha=0.2)
   plt.legend()
   plt.savefig(fn)
   plt.clf()
