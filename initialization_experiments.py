@@ -26,9 +26,31 @@ import argparse
 import jax.numpy as jnp
 from jax import random
 from jax.example_libraries import stax
-from jax.example_libraries.stax import Dense, Relu
+from jax.example_libraries.stax import Dense, Tanh, Relu, Softplus, Sigmoid, \
+    Elu, LeakyRelu, Selu, Gelu
 from jax.scipy.special import logsumexp
 import keras.datasets.mnist
+
+
+def get_activation(name):
+    if name == 'tanh':
+        return Tanh
+    elif name == 'relu':
+        return Relu
+    elif name == 'softplus':
+        return Softplus
+    elif name == 'sigmoid':
+        return Sigmoid
+    elif name == 'elu':
+        return Elu
+    elif name == 'leakyrelu':
+        return LeakyRelu
+    elif name == 'selu':
+        return Selu
+    elif name == 'gelu':
+        return Gelu
+    else:
+        assert False
 
 
 class Experiment(object):
@@ -36,9 +58,10 @@ class Experiment(object):
         self.depth = args.depth
         self.n_outputs = 10
 
+        activation = get_activation(args.activation)
         layers = []
         for _ in range(self.depth):
-            layers += [Dense(args.width), Relu]
+            layers += [Dense(args.width), activation]
         layers.append(Dense(self.n_outputs))
         self.init_random_params, self.logit_predict = stax.serial(*layers)
 
@@ -109,4 +132,6 @@ if __name__ == '__main__':
                         help='Depth.')
     parser.add_argument('--width', type=int, default=128,
                         help='Depth.')
+    parser.add_argument('--activation', type=str, default='relu',
+                        help='Activation name.')
     main(parser.parse_args())

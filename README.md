@@ -84,7 +84,7 @@ Please download data and put to corresponding folder.
 
 ### Initialization experiments
 
-    python3 initialization_experiments.py
+    python3 initialization_experiments.py --activation relu
 
 ## Plot results
 
