@@ -82,6 +82,10 @@ Please download data and put to corresponding folder.
 
     python3 same_outputs.py
 
+### Initialization experiments
+
+    python3 initialization_experiments.py
+
 ## Plot results
 
     python3 plot_results.py --experiment_id main_dnn --show_legend
