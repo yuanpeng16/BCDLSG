@@ -49,6 +49,8 @@ def get_activation(name):
         return Selu
     elif name == 'gelu':
         return Gelu
+    elif name == 'linear':
+        return None
     else:
         assert False
 
@@ -61,7 +63,9 @@ class Experiment(object):
         activation = get_activation(args.activation)
         layers = []
         for _ in range(self.depth):
-            layers += [Dense(args.width), activation]
+            layers.append(Dense(args.width))
+            if activation is not None:
+                layers.append(activation)
         layers.append(Dense(self.n_outputs))
         self.init_random_params, self.logit_predict = stax.serial(*layers)
 
