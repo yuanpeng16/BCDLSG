@@ -70,17 +70,18 @@ class Experiment(object):
         self.init_random_params, self.logit_predict = stax.serial(*layers)
 
     def accuracy(self, params, inputs):
-        predictions = self.predict(params, inputs)
-        predicted_class = jnp.argmax(predictions, axis=1)
-        size = len(predicted_class)
-        predicted_class = np.eye(self.n_outputs)[predicted_class]
-        freq = np.sum(predicted_class, axis=0)
-        entropy = 0
-        for f in freq:
-            if f > 0:
-                p = f / size
-                entropy += - p * np.log2(p)
-        return entropy
+        log_p = self.predict(params, inputs)
+        p = np.exp(log_p)
+        denominator = np.sum(p, axis=1, keepdims=True)
+        p = p / denominator
+        log_p = np.log2(p)
+
+        average_p = np.mean(p, axis=0, keepdims=True)
+        cross_entropy = -np.sum(average_p * log_p, axis=1)
+        average_cross_entropy = np.mean(cross_entropy)
+        average_entropy = -np.sum(average_p * np.log2(average_p))
+        kl_divergence = average_cross_entropy - average_entropy
+        return kl_divergence
 
     def predict(self, params, inputs):
         logits = self.logit_predict(params, inputs)
