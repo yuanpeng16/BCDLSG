@@ -42,7 +42,7 @@ class Experiment(object):
         self.depth = args.depth
 
         layers = []
-        for _ in range(self.depth):
+        for _ in range(self.depth - 1):
             layers += [Dense(args.width), Relu]
         layers.append(Dense(20))
         self.init_random_params, self.logit_predict = stax.serial(*layers)
@@ -190,6 +190,14 @@ def main(args):
     plt.savefig(fn, bbox_inches='tight', pad_inches=0.01)
     plt.clf()
 
+    fn = os.path.join(folder, 'random_same_' + str(args.depth) + '.txt')
+    with open(fn, 'w') as f:
+        for x in random_same_list:
+            f.write(str(x[0]))
+            f.write('\t')
+            f.write(str(x[-1]))
+            f.write('\n')
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -202,7 +210,7 @@ if __name__ == '__main__':
     parser.add_argument('--depth', type=int, default=8,
                         help='Depth.')
     parser.add_argument('--width', type=int, default=128,
-                        help='Depth.')
+                        help='Width.')
     parser.add_argument('--show_legend', action='store_true',
                         default=False, help='Show legend.')
     main(parser.parse_args())

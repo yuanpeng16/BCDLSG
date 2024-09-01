@@ -80,7 +80,7 @@ Please download data and put to corresponding folder.
 
 ### Same outputs
 
-    python3 same_outputs.py
+    sh same_outputs.sh
 
 ### Initialization experiments
 
