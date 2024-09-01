@@ -192,10 +192,12 @@ def main(args):
 
     fn = os.path.join(folder, 'random_same_' + str(args.depth) + '.txt')
     with open(fn, 'w') as f:
-        for x in random_same_list:
+        for t, x in zip(test_acc_list, random_same_list):
             f.write(str(x[0]))
             f.write('\t')
             f.write(str(x[-1]))
+            f.write('\t')
+            f.write(str(t[-1]))
             f.write('\n')
 
 

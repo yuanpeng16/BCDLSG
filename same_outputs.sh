@@ -1,4 +1,4 @@
-for i in 6 7
+for i in $(seq 8)
 do
   python3 same_outputs.py --depth "${i}"
 done
