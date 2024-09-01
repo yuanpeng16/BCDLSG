@@ -61,7 +61,7 @@ class Experiment(object):
         self.args = args
         self.depth = depth
         layers = []
-        for _ in range(depth):
+        for _ in range(depth - 1):
             layers += [Dense(args.width)]
         layers.append(Dense(4))
         self.init_random_params, self.logit_predict = stax.serial(*layers)
@@ -228,6 +228,7 @@ def one_depth(args, depth, data):
     fn = os.path.join(folder, str(depth) + 'd.pdf')
     angle_mean = np.mean(angle_matrix, 0)
     angle_std = np.std(angle_matrix, 0)
+    last_angle = angle_mean[-1], angle_std[-1]
     plt.axhline(y=0, color='gray', linestyle='dashed')
     plt.axhline(y=90, color='gray', linestyle='dashed')
     plt.axhline(y=180, color='gray', linestyle='dashed')
@@ -242,7 +243,7 @@ def one_depth(args, depth, data):
     fn = os.path.join(folder, str(depth) + 'd.pdf')
     plot_matrix(loss_matrix, fn)
 
-    return np.asarray(results), np.asarray(train_results)
+    return np.asarray(results), np.asarray(train_results), last_angle
 
 
 def main(args):
@@ -262,14 +263,17 @@ def main(args):
 
     train_results = []
     all_results = []
-    for depth in range(40):
-        results, train_result = one_depth(args, depth, data)
+    last_angles = []
+    for d in range(8):
+        depth = 2 ** d
+        results, train_result, last_angle = one_depth(args, depth, data)
         train_results.append(train_result)
+        last_angles.append(last_angle)
         if args.plot_prediction:
-            print(depth, train_result, results)
+            print(depth, *last_angle, train_result, results)
             all_results.append(results)
         else:
-            print(depth, train_result)
+            print(depth, *last_angle, train_result)
 
     matrix = np.asarray(train_results)
     mean = np.mean(matrix, -1)
@@ -277,12 +281,26 @@ def main(args):
     print(mean)
     print(std)
 
+    folder = os.path.join("lin_results", str(args.width))
+    os.makedirs(folder, exist_ok=True)
+    fn = os.path.join(folder, 'results.txt')
+    with open(fn, 'w') as f:
+        for acc, last_angle in zip(mean, last_angles):
+            f.write(str(acc))
+            f.write('\t')
+            f.write(str(last_angle[0]))
+            f.write('\t')
+            f.write(str(last_angle[1]))
+            f.write('\n')
+
     if args.plot_prediction:
         matrix = np.asarray(all_results)
         mean = np.mean(matrix, -1)
         std = np.std(matrix, -1)
         print(mean)
         print(std)
+
+    print(np.asarray(last_angles))
 
 
 if __name__ == '__main__':
