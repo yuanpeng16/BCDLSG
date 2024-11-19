@@ -111,6 +111,22 @@ def write_draw(args, lists, stds, legends, basedir, colors, lw, loc, labels,
                v_name, u_name, plot=True, font_size=24):
     write_to_file(lists, stds, basedir)
 
+    if args.plot_type == "evaluation":
+        lists = lists[2:]
+        stds = stds[2:]
+        legends = legends[2:]
+        colors = colors[2:]
+        basedir += "_eval"
+    elif args.plot_type == "simple":
+        lists = lists[2:3]
+        stds = stds[2:3]
+        legends = ["Accuracy (%) for\ncompositional generalization"]
+        colors = colors[2:3]
+        v_name = None
+        u_name = "Degree of parameter sharing"
+        labels = ["small"] + [None] * (len(labels) - 2) + ["large"]
+        basedir += "_simple"
+        font_size = 28
     if plot:
         draw_figure(args, lists, stds, legends, basedir, colors, lw, loc,
                     labels, v_name, u_name, font_size=font_size)
@@ -304,4 +320,6 @@ if __name__ == '__main__':
                         default=False, help='Show legend.')
     parser.add_argument('--legend_font_size', type=int, default=15,
                         help='Number of horizontal points to plot.')
+    parser.add_argument('--plot_type', type=str,
+                        default='evaluation', help='Experiment type.')
     main(parser.parse_args())
