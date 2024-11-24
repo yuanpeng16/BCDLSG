@@ -48,14 +48,15 @@ Please download data and put to corresponding folder.
 - cub: http://www.vision.caltech.edu/datasets/cub_200_2011/
 - sun: https://cs.brown.edu/~gmpatter/sunattributes.html
 
+```
+# Preprocess
+python3 preprocess_data.py --dataest cub
+python3 preprocess_data.py --dataest sun
 
-    # Preprocess
-    python3 preprocess_data.py --dataest cub
-    python3 preprocess_data.py --dataest sun
-
-    # Experiments
-    # Scripts in scripts/zeroshot
-    sh scripts/batch.sh scripts/zeroshot/zeroshot_apy.sh
+# Experiments
+# Scripts in scripts/zeroshot
+sh scripts/batch.sh scripts/zeroshot/zeroshot_apy.sh
+```
 
 ### Training process
 
