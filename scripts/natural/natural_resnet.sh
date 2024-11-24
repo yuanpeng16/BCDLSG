@@ -19,7 +19,7 @@ echo \
   --merge_type nico \
   --model_type resnet \
   --log_interval 500 \
-  --batch_size 512 \
+  --batch_size 128 \
   --lr 0.001 \
   --steps 5000 \
   --n_hidden_nodes 64 \

@@ -19,7 +19,7 @@ echo \
   --merge_type nico \
   --model_type vision_transformer \
   --log_interval 500 \
-  --batch_size 512 \
+  --batch_size 256 \
   --lr 0.001 \
   --steps 5000 \
   --n_hidden_nodes 64 \
