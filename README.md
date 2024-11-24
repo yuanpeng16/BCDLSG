@@ -63,11 +63,6 @@ sh scripts/batch.sh scripts/zeroshot/zeroshot_apy.sh
     # Scripts in scripts/partition-t_main
     sh scripts/batch.sh scripts/partition-t_main/partition-t_dnn.sh
 
-### New classes
-
-    # Scripts in scripts/single
-    sh scripts/batch.sh scripts/single/single_dnn.sh
-
 ### Equally difficult factors
 
     # Scripts in scripts/equal
