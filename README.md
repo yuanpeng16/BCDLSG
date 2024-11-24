@@ -78,18 +78,6 @@ sh scripts/batch.sh scripts/zeroshot/zeroshot_apy.sh
     # Scripts in scripts/label
     sh scripts/batch.sh scripts/label/label_tile.sh
 
-### Linear experiment
-
-    sh linear_scripts/linear_16.sh
-
-### Same outputs
-
-    sh same_outputs.sh
-
-### Initialization experiments
-
-    python3 initialization_experiments.py
-
 ## Plot results
 
     python3 plot_results.py --experiment_id main_dnn --show_legend
