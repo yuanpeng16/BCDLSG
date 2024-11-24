@@ -1,4 +1,4 @@
-# On a Built-in Conflict between Deep Learning and Systematic Generalization
+# Instructions
 
 ## Main experiments
 
@@ -23,6 +23,7 @@ extract to ../../data/amazon.
 - Electronics_5
 - Movies_and_TV_5
 
+
     # Preprocess
     # Images
     python3 preprocess_data.py --dataset nico
@@ -45,6 +46,7 @@ Please download data and put to corresponding folder.
 - awa2: https://cvml.ist.ac.at/AwA2/
 - cub: http://www.vision.caltech.edu/datasets/cub_200_2011/
 - sun: https://cs.brown.edu/~gmpatter/sunattributes.html
+
 
     # Preprocess
     python3 preprocess_data.py --dataest cub
