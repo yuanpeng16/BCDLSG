@@ -23,20 +23,21 @@ extract to ../../data/amazon.
 - Electronics_5
 - Movies_and_TV_5
 
+```
+# Preprocess
+# Images
+python3 preprocess_data.py --dataset nico
+# Texts: repeat for the five categories.
+python3 amazon_review_dataset.py --category Movies_and_TV_5
 
-    # Preprocess
-    # Images
-    python3 preprocess_data.py --dataset nico
-    # Texts: repeat for the five categories.
-    python3 amazon_review_dataset.py --category Movies_and_TV_5
+# Experiments
+# Scripts in scripts/natural
+sh scripts/batch.sh scripts/natural/natural_dnn.sh
 
-    # Experiments
-    # Scripts in scripts/natural
-    sh scripts/batch.sh scripts/natural/natural_dnn.sh
-
-    # Ablation
-    # Scripts in scripts/ablation
-    sh scripts/batch.sh scripts/ablation/ablation_dnn-64.sh
+# Ablation
+# Scripts in scripts/ablation
+sh scripts/batch.sh scripts/ablation/ablation_dnn-64.sh
+```
 
 ### Zero-shot learning
 
