@@ -79,13 +79,13 @@ def main(args):
         ]
     elif args.experiment_set == 'natural':
         all_names = [
-            ['DNN', 'review_dnn'],
-            ['CNN', 'review_cnn'],
-            ['ResNet', 'review_resnet'],
-            ['ViT', 'review_vit'],
-            ['LSTM', 'review_lstm'],
-            ['LSTM-1', 'review_lstm-1'],
-            ['Transformer', 'review_transformer'],
+            ['DNN', 'natural_dnn'],
+            ['CNN', 'natural_cnn'],
+            ['ResNet', 'natural_resnet'],
+            ['ViT', 'natural_vit'],
+            ['LSTM', 'natural_lstm'],
+            ['LSTM-1', 'natural_lstm-1'],
+            ['Transformer', 'natural_transformer'],
             ['64', 'ablation_dnn-64'],
             ['128', 'ablation_dnn-128'],
             ['512', 'ablation_dnn-512'],
