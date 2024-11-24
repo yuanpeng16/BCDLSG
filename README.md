@@ -1,4 +1,4 @@
-# On a Built-in Conflict between Deep Learning and Systematic Generalization
+# Instructions
 
 ## Main experiments
 
