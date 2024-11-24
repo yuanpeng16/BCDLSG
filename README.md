@@ -80,6 +80,8 @@ sh scripts/batch.sh scripts/zeroshot/zeroshot_apy.sh
 
 ## Plot results
 
+### Plot figures
+
     python3 plot_results.py --experiment_id main_dnn --show_legend
 
 ### Summarize results
