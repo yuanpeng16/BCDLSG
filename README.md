@@ -2,12 +2,12 @@
 
 ## Main experiments
 
+## Synthesized data
+
     # Scripts in scripts/main
     sh scripts/batch.sh scripts/main/main_dnn.sh
 
-## More experiments
-
-### Natural inputs
+### Natural data
 
 Please download data and put to corresponding folder.
 
@@ -38,6 +38,8 @@ sh scripts/batch.sh scripts/natural/natural_dnn.sh
 # Scripts in scripts/ablation
 sh scripts/batch.sh scripts/ablation/ablation_dnn-64.sh
 ```
+
+## More experiments
 
 ### Zero-shot learning
 
