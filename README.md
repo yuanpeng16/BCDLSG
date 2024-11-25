@@ -2,7 +2,7 @@
 
 ## Main experiments
 
-## Synthesized data
+### Synthesized data
 
     # Scripts in scripts/main
     sh scripts/batch.sh scripts/main/main_dnn.sh
